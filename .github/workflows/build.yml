@@ -1,0 +1,49 @@
+name: Build Test
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    name: Check the program compilation
+    runs-on: ubuntu-latest
+    container:
+      image: epitechcontent/epitest-docker:latest
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Make the project
+        timeout-minutes: 2
+        run: make
+        working-directory: ${{ github.workspace }}
+
+      - name: Clean the project
+        run: make clean
+        working-directory: ${{ github.workspace }}
+
+      - name: Configure CMake
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build Project
+        run: cmake --build build --config Release
+
+  run_tests:
+    name: Launch criterion tests
+    runs-on: ubuntu-latest
+    needs: [ build ]
+    if: ${{ needs.build.result == 'success' }}
+    container:
+      image: epitechcontent/epitest-docker:latest
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Launch make tests_run
+        timeout-minutes: 2
+        run: make tests_run
+        working-directory: ${{ github.workspace }}
