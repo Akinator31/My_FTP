@@ -9,7 +9,13 @@ find_library(CRITERION_LIB criterion)
 file(GLOB_RECURSE SRC_FILES "src/*.cpp")
 list(REMOVE_ITEM SRC_FILES "${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp")
 
-add_executable(myftp ${SRC_FILES} src/main.cpp)
+add_executable(myftp ${SRC_FILES} src/main.cpp
+        src/Server/Server.cpp
+        src/Server/Server.h++
+        src/Utils/Utils.cpp
+        src/Utils/Utils.h++
+        src/Errors/MyFtpErrors.cpp
+        src/Errors/MyFtpErrors.h++)
 target_include_directories(myftp PRIVATE include src)
 target_compile_options(myftp PRIVATE -Wall -Wextra -Werror)
 
