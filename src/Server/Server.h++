@@ -3,21 +3,35 @@
 //
 
 #pragma once
+#include <functional>
+#include <map>
 #include <string>
 #include <vector>
 #include <poll.h>
-#include <netinet/in.h>
+#include <memory>
+
+#include "FtpSession/FtpSession.h++"
 
 namespace my_ftp {
+    struct ClientNode {
+        pollfd pfd;
+        std::unique_ptr<FtpSession> session;
+    };
+
     class Server {
-        size_t _port;
         std::string _path;
-        int _serverSocket;
-        sockaddr_in _serverSocketConfiguration{};
-        std::vector<pollfd> _controlSocketsList;
+        FtpSession _serverSession;
+
+        std::vector<ClientNode> _clients;
+        std::map<std::string, std::function<void ()>> _funcMap;
 
         void _bind();
         void _listen() const;
+
+        void _acceptClientConnection();
+        [[nodiscard]] bool _isServerSocketForPollIn(const pollfd& socket) const;
+        void _disconnectClient(size_t& clientIndex);
+        void _handleCommand(const ClientNode& client, const std::string& command);
 
     public:
         Server(size_t port, const std::string& path);

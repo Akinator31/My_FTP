@@ -18,6 +18,7 @@ namespace my_ftp {
         ErrorListenSocket,
         ErrorPollSocket,
         ErrorAcceptSocket,
+        ErrorReadSocket,
     };
 
     class MyFtpErrors : public std::exception {
@@ -30,7 +31,8 @@ namespace my_ftp {
             {ErrorBindSocket, "An error occurred while binding the server socket!"},
             {ErrorBindSocket, "An error occurred while setting the server socket in listen state!"},
             {ErrorPollSocket, "An error occurred while polling the server socket!"},
-            {ErrorAcceptSocket, "An error occurred while accepting connection from the server socket!"}
+            {ErrorAcceptSocket, "An error occurred while accepting connection from the server socket!"},
+            {ErrorReadSocket, "An error occurred while reading a socket!"}
         };
 
         std::string _errorMessage;
