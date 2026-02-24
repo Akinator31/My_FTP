@@ -5,7 +5,7 @@
 #pragma once
 #include "Server/Server.h++"
 
-namespace my_ftp {
+namespace MyFtp {
     class Utils {
     public:
         static Server loadServer(char** av);

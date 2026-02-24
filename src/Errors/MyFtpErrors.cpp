@@ -4,7 +4,7 @@
 
 #include "MyFtpErrors.h++"
 
-namespace my_ftp {
+namespace MyFtp {
     MyFtpErrors::MyFtpErrors(const MyFtpErrorType type) {
         this->_errorMessage = this->_errorMap[type];
     }

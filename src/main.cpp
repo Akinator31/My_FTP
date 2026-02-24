@@ -6,13 +6,13 @@
 
 int main(const int ac, char** av) {
     if (std::string(av[1]) == "--help")
-        return my_ftp::Utils::printUsage();
+        return MyFtp::Utils::printUsage();
 
     try {
         if (ac != 3)
-            throw my_ftp::MyFtpErrors(my_ftp::IncorrectNumberArgs);
+            throw MyFtp::MyFtpErrors(MyFtp::IncorrectNumberArgs);
 
-        my_ftp::Server server = my_ftp::Utils::loadServer(av);
+        MyFtp::Server server = MyFtp::Utils::loadServer(av);
 
         server.start();
     }

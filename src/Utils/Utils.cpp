@@ -10,7 +10,7 @@
 
 #include "Errors/MyFtpErrors.h++"
 
-namespace my_ftp {
+namespace MyFtp {
     int Utils::printUsage() {
         std::cout << "USAGE: ./myftp port path" << std::endl;
         std::cout << " port is the port number on which the server socket listens" << std::endl;

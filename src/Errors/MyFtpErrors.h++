@@ -7,7 +7,7 @@
 #include <string>
 #include <map>
 
-namespace my_ftp {
+namespace MyFtp {
     enum MyFtpErrorType {
         IncorrectNumberArgs,
         IncorrectArgs,

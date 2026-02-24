@@ -13,13 +13,20 @@
 
 #include <sstream>
 
+#include "Client/Client.h++"
+#include "Commands/Commands.h++"
 #include "FtpSession/FtpSession.h++"
 #include "Errors/MyFtpErrors.h++"
 
-namespace my_ftp {
+
+namespace MyFtp {
     Server::Server(const size_t port, const std::string& path) : _serverSession(
         FtpSession(FTPServer, socket(AF_INET, SOCK_STREAM, 0))) {
         this->_path = path;
+
+        this->_funcMap = {
+            {"USER", &Commands::user},
+        };
 
         this->_serverSession.setSocketConfiguration(
             {
@@ -67,34 +74,34 @@ namespace my_ftp {
         if (newClientSocket == -1) {
             throw MyFtpErrors(ErrorAcceptSocket);
         }
-        this->_clients.push_back(
-            {
-                .pfd = {.fd = newClientSocket, .events = POLLIN | POLLOUT, .revents = 0},
-                .session = std::make_unique<FtpSession>(FTPClient, newClientSocket),
-            }
-        );
 
-        write(newClientSocket, "220 Service ready for new user.\r\n", 33);
+        this->_clients.push_back(Client({.fd = newClientSocket, .events = POLLIN | POLLOUT, .revents = 0},
+                                        std::make_unique<FtpSession>(FTPClient, newClientSocket)));
+
+        this->_clients.back().sendReply(220);
     }
 
     void Server::_disconnectClient(size_t& clientIndex) {
-        close(this->_clients[clientIndex].pfd.fd);
+        close(this->_clients[clientIndex].getPfd().fd);
         this->_clients.erase(this->_clients.begin() + static_cast<int>(clientIndex));
         clientIndex--;
     }
 
-    void Server::_handleCommand([[maybe_unused]] const ClientNode& client, const std::string& command) {
+    void Server::_handleCommand(Client& client, const std::string& command) {
         std::stringstream commandSs(command);
         std::string name = {};
         std::string rest = {};
 
         commandSs >> name;
 
+        printf("NAME : %s:\n", name.c_str());
+
         if (this->_funcMap.contains(name)) {
-            this->_funcMap[name]();
+            this->_funcMap[name](client, command);
         }
         else {
-            write(client.pfd.fd, "500 Unknown command\r\n", 21);
+            client.sendReply(500);
+            printf("%s\n", client.getSession()->getOutputBuffer().data());
         }
     }
 
@@ -107,8 +114,8 @@ namespace my_ftp {
                 .revents = 0,
             });
 
-            for (const auto& [pfd, _] : this->_clients)
-                pfds.push_back(pfd);
+            for (auto& client : this->_clients)
+                pfds.push_back(client.getPfd());
 
             if (poll(pfds.data(), pfds.size(), -1) == -1)
                 throw MyFtpErrors(ErrorPollSocket);
@@ -122,28 +129,33 @@ namespace my_ftp {
                 if (pfds[i + 1].revents & POLLIN) {
                     char buffer[1024] = {};
                     std::string command = {};
-                    ssize_t bytesRead = read(this->_clients[i].pfd.fd, buffer, sizeof(buffer) - 1);
+                    ssize_t bytesRead = read(this->_clients[i].getPfd().fd, buffer, sizeof(buffer) - 1);
 
                     if (bytesRead > 0) {
                         buffer[bytesRead] = '\0';
-                        this->_clients[i].session->getCommandBuffer().append(buffer, bytesRead);
+                        this->_clients[i].getSession()->getCommandBuffer().append(buffer, bytesRead);
 
-                        if (const size_t pos = this->_clients[i].session->getCommandBuffer().find("\r\n"); pos !=
+                        if (const size_t pos = this->_clients[i].getSession()->getCommandBuffer().find("\r\n"); pos !=
                             std::string::npos) {
-                            command.append(this->_clients[i].session->getCommandBuffer().substr(0, pos));
-                            this->_clients[i].session->getCommandBuffer().erase(0, pos + 2);
+                            command.append(this->_clients[i].getSession()->getCommandBuffer().substr(0, pos));
+                            this->_clients[i].getSession()->getCommandBuffer().erase(0, pos + 2);
                             this->_handleCommand(this->_clients[i], command);
+                            continue;
                         }
-
-                        write(this->_clients[i].pfd.fd, "500 Unknown command\r\n", 21);
                     }
                     else if (bytesRead == 0) {
                         std::cout << "Client disconnected" << std::endl;
                         this->_disconnectClient(i);
+                        continue;
                     }
                     else {
                         throw MyFtpErrors(ErrorReadSocket);
                     }
+                }
+                if (std::string& outputBuffer = this->_clients[i].getSession()->getOutputBuffer(); pfds[i + 1].revents &
+                    POLLOUT && pfds[i + 1].fd != this->_serverSession.getControlSocket() && !outputBuffer.empty()) {
+                    write(this->_clients[i].getPfd().fd, outputBuffer.data(), outputBuffer.size());
+                    outputBuffer = "";
                 }
             }
         }

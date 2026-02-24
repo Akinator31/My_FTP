@@ -17,7 +17,11 @@ add_executable(myftp ${SRC_FILES} src/main.cpp
         src/Errors/MyFtpErrors.cpp
         src/Errors/MyFtpErrors.h++
         src/FtpSession/FtpSession.cpp
-        src/FtpSession/FtpSession.h++)
+        src/FtpSession/FtpSession.h++
+        src/Server/Commands/Commands.cpp
+        src/Server/Commands/Commands.h++
+        src/Client/Client.cpp
+        src/Client/Client.h++)
 target_include_directories(myftp PRIVATE include src)
 target_compile_options(myftp PRIVATE -Wall -Wextra -Werror)
 
