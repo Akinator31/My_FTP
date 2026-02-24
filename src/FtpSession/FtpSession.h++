@@ -3,10 +3,11 @@
 //
 
 #pragma once
+#include <map>
 #include <string>
 #include <netinet/in.h>
 
-namespace my_ftp {
+namespace MyFtp {
     enum FtpSessionType {
         FTPServer,
         FTPClient,
@@ -18,6 +19,9 @@ namespace my_ftp {
         sockaddr_in _socketConfiguration{};
         FtpSessionType _sessionType;
         std::string _commandBuffer;
+        std::string _outputBuffer;
+
+        static const std::map<int, std::string> replyCode;
 
     public:
         FtpSession(FtpSessionType type, int controlSocket);
@@ -25,6 +29,7 @@ namespace my_ftp {
         [[nodiscard]] int getControlSocket() const;
         sockaddr_in& getSocketConfiguration();
         std::string& getCommandBuffer();
+        std::string& getOutputBuffer();
 
         void setSocketConfiguration(const sockaddr_in& config);
     };

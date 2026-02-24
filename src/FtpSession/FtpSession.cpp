@@ -6,13 +6,14 @@
 
 #include "Errors/MyFtpErrors.h++"
 
-namespace my_ftp {
+namespace MyFtp {
     FtpSession::FtpSession(const FtpSessionType type, const int controlSocket) {
         if (controlSocket == -1)
             throw MyFtpErrors(ErrorCreateSocket);
 
         this->_controlSocket = controlSocket;
         this->_commandBuffer = "";
+        this->_outputBuffer = "";
         this->_sessionType = type;
         this->_dataSocket = -1;
     }
@@ -31,5 +32,9 @@ namespace my_ftp {
 
     std::string& FtpSession::getCommandBuffer() {
         return this->_commandBuffer;
+    }
+
+    std::string& FtpSession::getOutputBuffer() {
+        return this->_outputBuffer;
     }
 }
