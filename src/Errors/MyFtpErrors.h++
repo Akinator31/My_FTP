@@ -19,6 +19,7 @@ namespace MyFtp {
         ErrorPollSocket,
         ErrorAcceptSocket,
         ErrorReadSocket,
+        ErrorReplyCode,
     };
 
     class MyFtpErrors : public std::exception {
@@ -32,7 +33,8 @@ namespace MyFtp {
             {ErrorBindSocket, "An error occurred while setting the server socket in listen state!"},
             {ErrorPollSocket, "An error occurred while polling the server socket!"},
             {ErrorAcceptSocket, "An error occurred while accepting connection from the server socket!"},
-            {ErrorReadSocket, "An error occurred while reading a socket!"}
+            {ErrorReadSocket, "An error occurred while reading a socket!"},
+            {ErrorReplyCode, "This reply code doesn't exist!"},
         };
 
         std::string _errorMessage;

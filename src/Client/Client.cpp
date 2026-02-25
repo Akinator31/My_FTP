@@ -6,6 +6,8 @@
 
 #include "Client.h++"
 
+#include "Errors/MyFtpErrors.h++"
+
 namespace MyFtp {
     Client::Client(const pollfd pfd, std::unique_ptr<FtpSession> session) : _pfd(pfd), _session(std::move(session)) {}
 
@@ -26,6 +28,8 @@ namespace MyFtp {
     }
 
     void Client::sendReply(const int replyCode) {
+        if (!_replyMessage.contains(replyCode))
+            throw MyFtpErrors(ErrorReplyCode);
         this->_session->getOutputBuffer() = _replyMessage[replyCode];
     }
 }
