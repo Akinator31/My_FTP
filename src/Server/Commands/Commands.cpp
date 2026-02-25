@@ -13,6 +13,20 @@
 #include "Utils/Utils.h++"
 
 namespace MyFtp {
+    int Commands::_setWorkingDirectory(Client& client, const std::filesystem::path& path) {
+        try {
+            if (Utils::isPathInsideTheRootPath(client.getRootPath(), canonical(path))) {
+                client.setCurrentPath(canonical(path));
+
+                return 1;
+            }
+            return 0;
+        }
+        catch (std::filesystem::filesystem_error&) {
+            return 0;
+        }
+    }
+
     void Commands::user(Client& client, const std::string& command) {
         std::istringstream ss(command);
 
@@ -58,28 +72,46 @@ namespace MyFtp {
 
     void Commands::cwd(Client& client, const std::string& command) {
         std::istringstream ss(command);
-
         std::string directory;
+
+        if (!client.isClientAlreadyLoggedIn()) {
+            client.sendReply(NOT_LOGGED_IN_530);
+            return;
+        }
 
         if (std::string commandName; !(ss >> commandName >> directory)) {
             client.sendReply(SYNTAX_ERROR_ARGS_501);
         }
 
         const std::filesystem::path combinedPath = client.getCurrentPath() / directory;
-        const std::filesystem::path normalizedPath = combinedPath.lexically_normal();
+        std::filesystem::path normalizedPath = combinedPath.lexically_normal();
 
-        try {
-            if (Utils::isPathInsideTheRootPath(client.getRootPath(), canonical(normalizedPath))) {
-                client.setCurrentPath(canonical(normalizedPath));
-
-                client.sendReply(REQUEST_FILE_ACTION_OK_250);
-            }
-            else {
-                client.sendReply(FILE_UNAVAILABLE_550);
-            }
-        }
-        catch (std::filesystem::filesystem_error&) {
+        if (_setWorkingDirectory(client, normalizedPath))
+            client.sendReply(REQUEST_FILE_ACTION_OK_250);
+        else
             client.sendReply(FILE_UNAVAILABLE_550);
+    }
+
+    void Commands::cdup(Client& client, const std::string& command) {
+        std::istringstream ss(command);
+        std::string rest;
+
+        if (!client.isClientAlreadyLoggedIn()) {
+            client.sendReply(NOT_LOGGED_IN_530);
+            return;
         }
+
+        if (std::string commandName; ss >> commandName >> rest) {
+            client.sendReply(SYNTAX_ERROR_ARGS_501);
+            return;
+        }
+
+        const std::filesystem::path combinedPath = client.getCurrentPath() / "../";
+        std::filesystem::path normalizedPath = combinedPath.lexically_normal();
+
+        if (_setWorkingDirectory(client, normalizedPath))
+            client.sendReply(COMMAND_OK_200);
+        else
+            client.sendReply(FILE_UNAVAILABLE_550);
     }
 }

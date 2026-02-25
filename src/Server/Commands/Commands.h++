@@ -9,9 +9,12 @@
 
 namespace MyFtp {
     class Commands {
+        static int _setWorkingDirectory(Client& client, const std::filesystem::path& path);
+
     public:
         static void user(Client& client, const std::string& command);
         static void pass(Client& client, const std::string& command);
         static void cwd(Client& client, const std::string& command);
+        static void cdup(Client& client, const std::string& command);
     };
 }

@@ -12,6 +12,7 @@
 
 namespace MyFtp {
     enum replyCode {
+        COMMAND_OK_200,
         SERVICE_READY_220,
         USER_LOGGED_IN_230,
         REQUEST_FILE_ACTION_OK_250,
@@ -35,6 +36,7 @@ namespace MyFtp {
         bool _isClientLoggedIn = false;
 
         std::map<replyCode, std::string> _replyMessage = {
+            {COMMAND_OK_200, "200 Command okay.\r\n"},
             {SERVICE_READY_220, "220 Service ready for new user.\r\n"},
             {USER_LOGGED_IN_230, "230 User logged in, proceed.\r\n"},
             {REQUEST_FILE_ACTION_OK_250, "250 Requested file action okay, completed.\r\n"},

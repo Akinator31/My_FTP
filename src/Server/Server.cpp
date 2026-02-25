@@ -28,6 +28,7 @@ namespace MyFtp {
             {"USER", &Commands::user},
             {"PASS", &Commands::pass},
             {"CWD", &Commands::cwd},
+            {"CDUP", &Commands::cdup},
         };
 
         this->_serverSession.setSocketConfiguration(
