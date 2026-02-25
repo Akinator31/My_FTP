@@ -26,6 +26,7 @@ namespace MyFtp {
 
         this->_funcMap = {
             {"USER", &Commands::user},
+            {"PASS", &Commands::pass},
         };
 
         this->_serverSession.setSocketConfiguration(
@@ -78,7 +79,7 @@ namespace MyFtp {
         this->_clients.push_back(Client({.fd = newClientSocket, .events = POLLIN | POLLOUT, .revents = 0},
                                         std::make_unique<FtpSession>(FTPClient, newClientSocket)));
 
-        this->_clients.back().sendReply(220);
+        this->_clients.back().sendReply(SERVICE_READY_220);
     }
 
     void Server::_disconnectClient(size_t& clientIndex) {
@@ -94,13 +95,11 @@ namespace MyFtp {
 
         commandSs >> name;
 
-        printf("NAME : %s:\n", name.c_str());
-
         if (this->_funcMap.contains(name)) {
             this->_funcMap[name](client, command);
         }
         else {
-            client.sendReply(500);
+            client.sendReply(SYNTAX_ERROR_COMMAND_500);
             printf("%s\n", client.getSession()->getOutputBuffer().data());
         }
     }

@@ -27,9 +27,17 @@ namespace MyFtp {
         return this->_password;
     }
 
-    void Client::sendReply(const int replyCode) {
-        if (!_replyMessage.contains(replyCode))
+    void Client::sendReply(const replyCode code) {
+        if (!_replyMessage.contains(code))
             throw MyFtpErrors(ErrorReplyCode);
-        this->_session->getOutputBuffer() = _replyMessage[replyCode];
+        this->_session->getOutputBuffer() = _replyMessage[code];
+    }
+
+    void Client::userLoggedIn() {
+        this->_isClientLoggedIn = true;
+    }
+
+    bool Client::isClientAlreadyLoggedIn() const {
+        return this->_isClientLoggedIn;
     }
 }
