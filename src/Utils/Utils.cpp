@@ -33,4 +33,15 @@ namespace MyFtp {
         Server server(port, path);
         return server;
     }
+
+    bool Utils::isPathInsideTheRootPath(const std::filesystem::path& rootPath, const std::filesystem::path& path) {
+        try {
+            const auto relativePath = std::filesystem::relative(path, rootPath);
+
+            return !relativePath.string().starts_with("..");
+        }
+        catch (const std::filesystem::filesystem_error&) {
+            return false;
+        }
+    }
 }

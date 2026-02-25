@@ -10,5 +10,6 @@ namespace MyFtp {
     public:
         static Server loadServer(char** av);
         static int printUsage();
+        static bool isPathInsideTheRootPath(const std::filesystem::path& rootPath, const std::filesystem::path& path);
     };
 }
