@@ -11,6 +11,7 @@
 
 #include "Server.h++"
 
+#include <csignal>
 #include <sstream>
 
 #include "Client/Client.h++"
@@ -18,8 +19,14 @@
 #include "FtpSession/FtpSession.h++"
 #include "Errors/MyFtpErrors.h++"
 
-
 namespace MyFtp {
+    bool SignalHandler::mustClose{false};
+
+    void SignalHandler::sigintHandler([[maybe_unused]] const int code) {
+        std::cout << "Shutting down my_ftp server..." << std::endl;
+        mustClose = true;
+    }
+
     Server::Server(const size_t port, const std::string& path) : _serverSession(
         FtpSession(FTPServer, socket(AF_INET, SOCK_STREAM, 0))) {
         this->_path = path;
@@ -108,7 +115,9 @@ namespace MyFtp {
     }
 
     void Server::start() {
-        while (true) {
+        signal(SIGINT, SignalHandler::sigintHandler);
+
+        while (!SignalHandler::mustClose) {
             std::vector<pollfd> pfds;
             pfds.push_back({
                 .fd = this->_serverSession.getControlSocket(),
@@ -119,8 +128,11 @@ namespace MyFtp {
             for (auto& client : this->_clients)
                 pfds.push_back(client.getPfd());
 
-            if (poll(pfds.data(), pfds.size(), -1) == -1)
+            if (poll(pfds.data(), pfds.size(), -1) == -1) {
+                if (SignalHandler::mustClose)
+                    break;
                 throw MyFtpErrors(ErrorPollSocket);
+            }
 
             if (pfds[0].revents & POLLIN) {
                 this->_acceptClientConnection();
@@ -136,12 +148,13 @@ namespace MyFtp {
                     if (bytesRead > 0) {
                         this->_clients[i].getSession()->getCommandBuffer().append(buffer, bytesRead);
 
-                        if (const size_t pos = this->_clients[i].getSession()->getCommandBuffer().find("\r\n"); pos !=
-                            std::string::npos) {
-                            command.append(this->_clients[i].getSession()->getCommandBuffer().substr(0, pos));
+                        size_t pos = this->_clients[i].getSession()->getCommandBuffer().find("\r\n");
+
+                        while (pos != std::string::npos) {
+                            command = this->_clients[i].getSession()->getCommandBuffer().substr(0, pos);
                             this->_clients[i].getSession()->getCommandBuffer().erase(0, pos + 2);
                             this->_handleCommand(this->_clients[i], command);
-                            continue;
+                            pos = this->_clients[i].getSession()->getCommandBuffer().find("\r\n");
                         }
                     }
                     else if (bytesRead == 0) {
@@ -153,8 +166,10 @@ namespace MyFtp {
                         throw MyFtpErrors(ErrorReadSocket);
                     }
                 }
-                if (std::string& outputBuffer = this->_clients[i].getSession()->getOutputBuffer(); pfds[i + 1].revents &
-                    POLLOUT && pfds[i + 1].fd != this->_serverSession.getControlSocket() && !outputBuffer.empty()) {
+
+                if (std::string& outputBuffer = this->_clients[i].getSession()->getOutputBuffer();
+                    pfds[i + 1].revents & POLLOUT && pfds[i + 1].fd != this->_serverSession.getControlSocket() &&
+                    !outputBuffer.empty()) {
                     write(this->_clients[i].getPfd().fd, outputBuffer.data(), outputBuffer.size());
                     outputBuffer = "";
                 }

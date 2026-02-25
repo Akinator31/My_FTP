@@ -45,7 +45,7 @@ namespace MyFtp {
     void Client::sendReply(const replyCode code) {
         if (!_replyMessage.contains(code))
             throw MyFtpErrors(ErrorReplyCode);
-        this->_session->getOutputBuffer() = _replyMessage[code];
+        this->_session->getOutputBuffer().append(_replyMessage[code]);
     }
 
     void Client::setCurrentPath(const std::filesystem::path& path) {

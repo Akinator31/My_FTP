@@ -13,6 +13,13 @@
 #include "FtpSession/FtpSession.h++"
 
 namespace MyFtp {
+    class SignalHandler {
+    public:
+        static bool mustClose;
+
+        static void sigintHandler(int code);
+    };
+
     class Server {
         std::string _path;
         FtpSession _serverSession;
