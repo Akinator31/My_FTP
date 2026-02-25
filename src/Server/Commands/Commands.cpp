@@ -114,4 +114,17 @@ namespace MyFtp {
         else
             client.sendReply(FILE_UNAVAILABLE_550);
     }
+
+    void Commands::quit(Client& client, const std::string& command) {
+        std::istringstream ss(command);
+        std::string rest;
+
+        if (std::string commandName; ss >> commandName >> rest) {
+            client.sendReply(SYNTAX_ERROR_ARGS_501);
+            return;
+        }
+
+        client.sendReply(SERVICE_CLOSING_221);
+        client.disconnect();
+    }
 }
