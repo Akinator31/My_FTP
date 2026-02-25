@@ -4,23 +4,25 @@
 
 #include "Commands.h++"
 
+#include <filesystem>
+#include <iostream>
 #include <sstream>
 #include <string>
 
 #include "Server/Server.h++"
+#include "Utils/Utils.h++"
 
 namespace MyFtp {
     void Commands::user(Client& client, const std::string& command) {
         std::istringstream ss(command);
 
         std::string commandName;
-        std::string username;
 
         if (client.isClientAlreadyLoggedIn()) {
             client.sendReply(USER_LOGGED_IN_230);
             return;
         }
-        if (!(ss >> commandName >> username)) {
+        if (std::string username; !(ss >> commandName >> username)) {
             client.sendReply(SYNTAX_ERROR_ARGS_501);
         }
         else {
@@ -52,5 +54,32 @@ namespace MyFtp {
         }
         else
             client.sendReply(NOT_LOGGED_IN_530);
+    }
+
+    void Commands::cwd(Client& client, const std::string& command) {
+        std::istringstream ss(command);
+
+        std::string directory;
+
+        if (std::string commandName; !(ss >> commandName >> directory)) {
+            client.sendReply(SYNTAX_ERROR_ARGS_501);
+        }
+
+        const std::filesystem::path combinedPath = client.getCurrentPath() / directory;
+        const std::filesystem::path normalizedPath = combinedPath.lexically_normal();
+
+        try {
+            if (Utils::isPathInsideTheRootPath(client.getRootPath(), canonical(normalizedPath))) {
+                client.setCurrentPath(canonical(normalizedPath));
+
+                client.sendReply(REQUEST_FILE_ACTION_OK_250);
+            }
+            else {
+                client.sendReply(FILE_UNAVAILABLE_550);
+            }
+        }
+        catch (std::filesystem::filesystem_error&) {
+            client.sendReply(FILE_UNAVAILABLE_550);
+        }
     }
 }

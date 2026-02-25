@@ -12,5 +12,6 @@ namespace MyFtp {
     public:
         static void user(Client& client, const std::string& command);
         static void pass(Client& client, const std::string& command);
+        static void cwd(Client& client, const std::string& command);
     };
 }

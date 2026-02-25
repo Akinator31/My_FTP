@@ -27,6 +27,7 @@ namespace MyFtp {
         this->_funcMap = {
             {"USER", &Commands::user},
             {"PASS", &Commands::pass},
+            {"CWD", &Commands::cwd},
         };
 
         this->_serverSession.setSocketConfiguration(
@@ -77,7 +78,7 @@ namespace MyFtp {
         }
 
         this->_clients.push_back(Client({.fd = newClientSocket, .events = POLLIN | POLLOUT, .revents = 0},
-                                        std::make_unique<FtpSession>(FTPClient, newClientSocket)));
+                                        std::make_unique<FtpSession>(FTPClient, newClientSocket), this->_path));
 
         this->_clients.back().sendReply(SERVICE_READY_220);
     }
