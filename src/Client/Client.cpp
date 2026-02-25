@@ -14,6 +14,10 @@ namespace MyFtp {
         this->_rootPath = std::filesystem::canonical(rootPath);
     }
 
+    void Client::disconnect() {
+        this->_mustLogOff = true;
+    }
+
     pollfd& Client::getPfd() {
         return this->_pfd;
     }
@@ -54,5 +58,9 @@ namespace MyFtp {
 
     bool Client::isClientAlreadyLoggedIn() const {
         return this->_isClientLoggedIn;
+    }
+
+    bool Client::mustLogOff() const {
+        return this->_mustLogOff;
     }
 }

@@ -29,6 +29,7 @@ namespace MyFtp {
             {"PASS", &Commands::pass},
             {"CWD", &Commands::cwd},
             {"CDUP", &Commands::cdup},
+            {"QUIT", &Commands::quit},
         };
 
         this->_serverSession.setSocketConfiguration(
@@ -84,8 +85,9 @@ namespace MyFtp {
         this->_clients.back().sendReply(SERVICE_READY_220);
     }
 
-    void Server::_disconnectClient(size_t& clientIndex) {
-        close(this->_clients[clientIndex].getPfd().fd);
+    void Server::_disconnectClient(size_t& clientIndex, const bool needToClose) {
+        if (needToClose)
+            close(this->_clients[clientIndex].getPfd().fd);
         this->_clients.erase(this->_clients.begin() + static_cast<int>(clientIndex));
         clientIndex--;
     }
@@ -102,7 +104,6 @@ namespace MyFtp {
         }
         else {
             client.sendReply(SYNTAX_ERROR_COMMAND_500);
-            printf("%s\n", client.getSession()->getOutputBuffer().data());
         }
     }
 
@@ -133,7 +134,6 @@ namespace MyFtp {
                     ssize_t bytesRead = read(this->_clients[i].getPfd().fd, buffer, sizeof(buffer) - 1);
 
                     if (bytesRead > 0) {
-                        buffer[bytesRead] = '\0';
                         this->_clients[i].getSession()->getCommandBuffer().append(buffer, bytesRead);
 
                         if (const size_t pos = this->_clients[i].getSession()->getCommandBuffer().find("\r\n"); pos !=
@@ -146,7 +146,7 @@ namespace MyFtp {
                     }
                     else if (bytesRead == 0) {
                         std::cout << "Client disconnected" << std::endl;
-                        this->_disconnectClient(i);
+                        this->_disconnectClient(i, true);
                         continue;
                     }
                     else {
@@ -157,6 +157,14 @@ namespace MyFtp {
                     POLLOUT && pfds[i + 1].fd != this->_serverSession.getControlSocket() && !outputBuffer.empty()) {
                     write(this->_clients[i].getPfd().fd, outputBuffer.data(), outputBuffer.size());
                     outputBuffer = "";
+                }
+                if (pfds[i + 1].revents & POLLNVAL) {
+                    std::cout << "Client disconnected" << std::endl;
+                    this->_disconnectClient(i, false);
+                }
+                if (this->_clients[i].mustLogOff()) {
+                    std::cout << "Client disconnected" << std::endl;
+                    this->_disconnectClient(i, true);
                 }
             }
         }

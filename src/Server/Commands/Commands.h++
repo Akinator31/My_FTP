@@ -16,5 +16,6 @@ namespace MyFtp {
         static void pass(Client& client, const std::string& command);
         static void cwd(Client& client, const std::string& command);
         static void cdup(Client& client, const std::string& command);
+        static void quit(Client& client, const std::string& command);
     };
 }

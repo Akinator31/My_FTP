@@ -25,7 +25,7 @@ namespace MyFtp {
 
         void _acceptClientConnection();
         [[nodiscard]] bool _isServerSocketForPollIn(const pollfd& socket) const;
-        void _disconnectClient(size_t& clientIndex);
+        void _disconnectClient(size_t& clientIndex, bool needToClose);
         void _handleCommand(Client& client, const std::string& command);
 
     public:

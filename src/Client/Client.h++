@@ -14,6 +14,7 @@ namespace MyFtp {
     enum replyCode {
         COMMAND_OK_200,
         SERVICE_READY_220,
+        SERVICE_CLOSING_221,
         USER_LOGGED_IN_230,
         REQUEST_FILE_ACTION_OK_250,
 
@@ -33,11 +34,13 @@ namespace MyFtp {
         std::string _password = "placeHolder";
         std::filesystem::path _rootPath;
         std::filesystem::path _currentPath;
+        bool _mustLogOff = false;
         bool _isClientLoggedIn = false;
 
         std::map<replyCode, std::string> _replyMessage = {
             {COMMAND_OK_200, "200 Command okay.\r\n"},
             {SERVICE_READY_220, "220 Service ready for new user.\r\n"},
+            {SERVICE_CLOSING_221, "221 Service closing control connection.\r\n"},
             {USER_LOGGED_IN_230, "230 User logged in, proceed.\r\n"},
             {REQUEST_FILE_ACTION_OK_250, "250 Requested file action okay, completed.\r\n"},
 
@@ -48,7 +51,6 @@ namespace MyFtp {
             {SYNTAX_ERROR_ARGS_501, "501 Syntax error in parameters or arguments.\r\n"},
             {NOT_LOGGED_IN_530, "530 Not logged in.\r\n"},
             {FILE_UNAVAILABLE_550, "550 Requested action not taken.\r\n"},
-
         };
 
     public:
@@ -61,8 +63,10 @@ namespace MyFtp {
         std::string& getPassword();
         std::filesystem::path& getRootPath();
         std::filesystem::path& getCurrentPath();
+        void disconnect();
         void setCurrentPath(const std::filesystem::path& path);
         void userLoggedIn();
+        [[nodiscard]] bool mustLogOff() const;
         [[nodiscard]] bool isClientAlreadyLoggedIn() const;
     };
 }
