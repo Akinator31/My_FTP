@@ -13,7 +13,7 @@ namespace MyFtp {
 
         this->_controlSocket = controlSocket;
         this->_commandBuffer = "";
-        this->_outputBuffer = "";
+        this->_outputBuffer = {};
         this->_sessionType = type;
         this->_dataSocket = -1;
     }
