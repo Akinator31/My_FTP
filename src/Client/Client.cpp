@@ -39,7 +39,19 @@ namespace MyFtp {
         return this->_currentPath;
     }
 
-    void Client::sendReply(const replyCode code) {
+    std::string Client::getVirtualPath() const {
+        const auto relative = std::filesystem::relative(this->_currentPath, this->_rootPath);
+
+        if (relative == ".")
+            return "/";
+        return "/" + relative.string();
+    }
+
+    void Client::sendReply(const replyCode code, const std::optional<std::string>& _customMessage) {
+        if (_customMessage != std::nullopt) {
+            this->_session->getOutputBuffer().append(*_customMessage);
+            return;
+        }
         if (!_replyMessage.contains(code))
             throw MyFtpErrors(ErrorReplyCode);
         this->_session->getOutputBuffer().append(_replyMessage[code]);

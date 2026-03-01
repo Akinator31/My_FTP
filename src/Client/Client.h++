@@ -90,9 +90,10 @@ namespace MyFtp {
         /**
          * @brief Sends a FTP reply to the client based on the reply code.
          * @param code The reply code to send (like COMMAND_OK_200 or NOT_LOGGED_IN_530).
+         * @param _customMessage If a message is given, only this message is send to the client (Ex: PWD)
          * @throws MyFtpErrors if the reply code dosnt exist in the map.
          */
-        void sendReply(replyCode code);
+        void sendReply(replyCode code, const std::optional<std::string>& _customMessage = std::nullopt);
 
         /**
          * @brief Gets the FTP session of this client.
@@ -123,6 +124,12 @@ namespace MyFtp {
          * @return A reference to the current path.
          */
         std::filesystem::path& getCurrentPath();
+
+        /**
+         * @brief Gets the current virtual working directory of the client.
+         * @return A reference to the current path.
+         */
+        std::string getVirtualPath() const;
 
         /**
          * @brief Marks the client for disconnection. It will be disconnected on the next loop.
