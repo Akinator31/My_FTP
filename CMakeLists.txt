@@ -29,7 +29,8 @@ add_executable(myftp ${SRC_FILES} src/main.cpp
 target_include_directories(myftp PRIVATE include src)
 target_compile_options(myftp PRIVATE -Wall -Wextra -Werror)
 
-add_executable(unit_tests ${SRC_FILES} tests/main-tests.cpp)
+file(GLOB_RECURSE TEST_FILES "tests/*.cpp")
+add_executable(unit_tests ${SRC_FILES} ${TEST_FILES})
 target_include_directories(unit_tests PRIVATE include src)
 
 target_link_libraries(unit_tests PRIVATE ${CRITERION_LIB})

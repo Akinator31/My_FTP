@@ -8,7 +8,7 @@
 namespace MyFtp {
     /**
      * @class Socket
-     * @brief A wrapper arround sockets that handle the lifecycle automaticly.
+     * @brief A wrapper arround POSIX sockets that handle the lifecycle automaticly (RAII).
      *
      * This class is responsable for creating, binding, listening and accepting connections
      * on a TCP socket. It also handles reading and writing data trough the socket.
