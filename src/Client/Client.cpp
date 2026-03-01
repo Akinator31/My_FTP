@@ -9,17 +9,14 @@
 #include "Errors/MyFtpErrors.h++"
 
 namespace MyFtp {
-    Client::Client(const pollfd pfd, std::unique_ptr<FtpSession> session, const std::string& rootPath) :
-        _pfd(pfd), _session(std::move(session)), _currentPath(rootPath) {
+    Client::Client(const int fd, std::unique_ptr<FtpSession> session, const std::string& rootPath) :
+        _session(std::move(session)), _currentPath(rootPath) {
+        this->_fd = fd;
         this->_rootPath = std::filesystem::canonical(rootPath);
     }
 
     void Client::disconnect() {
         this->_mustLogOff = true;
-    }
-
-    pollfd& Client::getPfd() {
-        return this->_pfd;
     }
 
     std::unique_ptr<FtpSession>& Client::getSession() {
@@ -62,5 +59,41 @@ namespace MyFtp {
 
     bool Client::mustLogOff() const {
         return this->_mustLogOff;
+    }
+
+    Client::ReadResult Client::readIncoming() {
+        char buffer[4096] = {};
+        const ssize_t bytesRead = this->_session->getControlSocket().read(buffer, sizeof(buffer) - 1);
+
+        if (bytesRead > 0) {
+            this->getSession()->getCommandBuffer().append(buffer, bytesRead);
+            return Ok;
+        }
+        if (bytesRead == 0) {
+            return Disconnected;
+        }
+        return Error;
+    }
+
+    std::optional<std::string> Client::nextCommand() const {
+        const size_t pos = this->_session->getCommandBuffer().find("\r\n");
+        std::string command = {};
+
+        if (pos == std::string::npos)
+            return std::nullopt;
+
+        command = this->_session->getCommandBuffer().substr(0, pos);
+        this->_session->getCommandBuffer().erase(0, pos + 2);
+        return command;
+    }
+
+    void Client::flushOutput() {
+        std::string& outputBuffer = this->getSession()->getOutputBuffer();
+        if (outputBuffer.empty())
+            return;
+
+        this->_session->getControlSocket().write(outputBuffer.data(), outputBuffer.size());
+
+        outputBuffer = "";
     }
 }
