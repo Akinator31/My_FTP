@@ -38,7 +38,8 @@ namespace MyFtp {
             {"CDUP", &Commands::cdup},
             {"QUIT", &Commands::quit},
             {"PWD", &Commands::pwd},
-            {"NOOP", &Commands::noop}
+            {"NOOP", &Commands::noop},
+            {"HELP", &Commands::help}
         };
 
         this->_poller.add(this->_serverSession.getControlSocket().fd(), POLLIN);

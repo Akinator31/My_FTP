@@ -149,13 +149,7 @@ namespace MyFtp {
 
     void Commands::noop(Client& client, const std::string& command) {
         std::istringstream ss(command);
-        std::stringstream output;
         std::string rest;
-
-        if (!client.isClientAlreadyLoggedIn()) {
-            client.sendReply(NOT_LOGGED_IN_530);
-            return;
-        }
 
         if (std::string commandName; ss >> commandName >> rest) {
             client.sendReply(SYNTAX_ERROR_ARGS_501);
@@ -163,5 +157,25 @@ namespace MyFtp {
         }
 
         client.sendReply(COMMAND_OK_200);
+    }
+
+    void Commands::help(Client& client, const std::string& command) {
+        std::istringstream ss(command);
+        std::stringstream output;
+        std::string helpCommand;
+
+        if (std::string commandName; ss >> commandName >> helpCommand) {
+            if (commandName.empty() || (!helpCommand.empty() && !_helpFuncMessages.contains(helpCommand))) {
+                client.sendReply(SYNTAX_ERROR_ARGS_501);
+                return;
+            }
+        }
+
+        if (helpCommand.empty())
+            output << "214 " << _helpGlobalMessage << "\r\n";
+        else
+            output << "214 " << _helpFuncMessages.find(helpCommand)->second << "\r\n";
+
+        client.sendReply(static_cast<replyCode>(0), output.str());
     }
 }
