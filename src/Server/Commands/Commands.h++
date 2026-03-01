@@ -84,5 +84,16 @@ namespace MyFtp {
          * @param command The full command string (should just be "QUIT").
          */
         static void quit(Client& client, const std::string& command);
+
+        /**
+         * @brief Handles the PWD command.
+         *
+         * Sends a "257 "PATHNAME" created" reply.
+         * The command should have no arguments.
+         *
+         * @param client The client that sended the command.
+         * @param command The full command string (should just be "QUIT").
+         */
+        static void pwd(Client& client, const std::string& command);
     };
 }
