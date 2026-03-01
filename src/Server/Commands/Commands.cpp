@@ -127,4 +127,23 @@ namespace MyFtp {
         client.sendReply(SERVICE_CLOSING_221);
         client.disconnect();
     }
+
+    void Commands::pwd(Client& client, const std::string& command) {
+        std::istringstream ss(command);
+        std::stringstream output;
+        std::string rest;
+
+        if (!client.isClientAlreadyLoggedIn()) {
+            client.sendReply(NOT_LOGGED_IN_530);
+            return;
+        }
+
+        if (std::string commandName; ss >> commandName >> rest) {
+            client.sendReply(SYNTAX_ERROR_ARGS_501);
+            return;
+        }
+
+        output << "257 \"" << client.getVirtualPath() << "\" created.\n";
+        client.sendReply(static_cast<replyCode>(0), output.str());
+    }
 }
