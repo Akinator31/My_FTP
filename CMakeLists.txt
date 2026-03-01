@@ -21,7 +21,11 @@ add_executable(myftp ${SRC_FILES} src/main.cpp
         src/Server/Commands/Commands.cpp
         src/Server/Commands/Commands.h++
         src/Client/Client.cpp
-        src/Client/Client.h++)
+        src/Client/Client.h++
+        src/Socket/Socket.cpp
+        src/Socket/Socket.h++
+        src/Poller/Poller.cpp
+        src/Poller/Poller.h++)
 target_include_directories(myftp PRIVATE include src)
 target_compile_options(myftp PRIVATE -Wall -Wextra -Werror)
 

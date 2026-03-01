@@ -28,7 +28,7 @@ namespace MyFtp {
     }
 
     Server::Server(const size_t port, const std::string& path) : _serverSession(
-        FtpSession(FTPServer, socket(AF_INET, SOCK_STREAM, 0))) {
+        FtpSession(FTPServer, Socket())) {
         this->_path = path;
 
         this->_funcMap = {
@@ -39,39 +39,10 @@ namespace MyFtp {
             {"QUIT", &Commands::quit},
         };
 
-        this->_serverSession.setSocketConfiguration(
-            {
-                .sin_family = AF_INET,
-                .sin_port = htons(port),
-                .sin_addr = {
-                    .s_addr = INADDR_ANY
-                },
-                .sin_zero = {}
-            }
-        );
+        this->_poller.add(this->_serverSession.getControlSocket().fd(), POLLIN);
 
-        this->_bind();
-        this->_listen();
-    }
-
-    void Server::_bind() {
-        const auto* serverConfiguration = reinterpret_cast<sockaddr*>(&this->_serverSession.getSocketConfiguration());
-        socklen_t serverConfigurationSize = sizeof(this->_serverSession.getSocketConfiguration());
-
-        if (bind(this->_serverSession.getControlSocket(), serverConfiguration, serverConfigurationSize) == -1)
-            throw MyFtpErrors(ErrorBindSocket);
-    }
-
-    void Server::_listen() const {
-        if (listen(this->_serverSession.getControlSocket(), SOMAXCONN) == -1) {
-            throw MyFtpErrors(ErrorListenSocket);
-        }
-    }
-
-    bool Server::_isServerSocketForPollIn(const pollfd& socket) const {
-        if (socket.fd == this->_serverSession.getControlSocket() && socket.revents & POLLIN)
-            return true;
-        return false;
+        this->_serverSession.getControlSocket().bind(port);
+        this->_serverSession.getControlSocket().listen();
     }
 
     void Server::_acceptClientConnection() {
@@ -79,22 +50,24 @@ namespace MyFtp {
         socklen_t clientAddrLen = sizeof(clientConfig);
 
         const int newClientSocket = accept(
-            this->_serverSession.getControlSocket(), reinterpret_cast<sockaddr*>(&clientConfig),
+            this->_serverSession.getControlSocket().fd(), reinterpret_cast<sockaddr*>(&clientConfig),
             &clientAddrLen);
 
         if (newClientSocket == -1) {
             throw MyFtpErrors(ErrorAcceptSocket);
         }
 
-        this->_clients.push_back(Client({.fd = newClientSocket, .events = POLLIN | POLLOUT, .revents = 0},
-                                        std::make_unique<FtpSession>(FTPClient, newClientSocket), this->_path));
+        this->_poller.add(newClientSocket, POLLIN | POLLOUT);
+
+        this->_clients.emplace_back(newClientSocket,
+                                    std::make_unique<FtpSession>(FTPClient, Socket(newClientSocket)), this->_path);
 
         this->_clients.back().sendReply(SERVICE_READY_220);
     }
 
     void Server::_disconnectClient(size_t& clientIndex, const bool needToClose) {
         if (needToClose)
-            close(this->_clients[clientIndex].getPfd().fd);
+            close(this->_clients[clientIndex].getSession()->getControlSocket().fd());
         this->_clients.erase(this->_clients.begin() + static_cast<int>(clientIndex));
         clientIndex--;
     }
@@ -118,68 +91,43 @@ namespace MyFtp {
         signal(SIGINT, SignalHandler::sigintHandler);
 
         while (!SignalHandler::mustClose) {
-            std::vector<pollfd> pfds;
-            pfds.push_back({
-                .fd = this->_serverSession.getControlSocket(),
-                .events = POLLIN,
-                .revents = 0,
-            });
-
-            for (auto& client : this->_clients)
-                pfds.push_back(client.getPfd());
-
-            if (poll(pfds.data(), pfds.size(), -1) == -1) {
+            if (this->_poller.wait() == -1) {
                 if (SignalHandler::mustClose)
                     break;
                 throw MyFtpErrors(ErrorPollSocket);
             }
-
-            if (pfds[0].revents & POLLIN) {
+            if (this->_poller.isReadable(this->_serverSession.getControlSocket().fd())) {
                 this->_acceptClientConnection();
                 continue;
             }
 
             for (size_t i = 0; i < this->_clients.size(); i++) {
-                if (pfds[i + 1].revents & POLLIN) {
-                    char buffer[1024] = {};
-                    std::string command = {};
-                    ssize_t bytesRead = read(this->_clients[i].getPfd().fd, buffer, sizeof(buffer) - 1);
+                const int clientFd = this->_clients[i].getSession()->getControlSocket().fd();
 
-                    if (bytesRead > 0) {
-                        this->_clients[i].getSession()->getCommandBuffer().append(buffer, bytesRead);
-
-                        size_t pos = this->_clients[i].getSession()->getCommandBuffer().find("\r\n");
-
-                        while (pos != std::string::npos) {
-                            command = this->_clients[i].getSession()->getCommandBuffer().substr(0, pos);
-                            this->_clients[i].getSession()->getCommandBuffer().erase(0, pos + 2);
-                            this->_handleCommand(this->_clients[i], command);
-                            pos = this->_clients[i].getSession()->getCommandBuffer().find("\r\n");
-                        }
-                    }
-                    else if (bytesRead == 0) {
-                        std::cout << "Client disconnected" << std::endl;
+                if (this->_poller.isReadable(clientFd)) {
+                    const auto result = this->_clients[i].readIncoming();
+                    if (result == Client::ReadResult::Disconnected) {
+                        this->_poller.remove(clientFd);
                         this->_disconnectClient(i, true);
                         continue;
                     }
-                    else {
+                    if (result == Client::ReadResult::Error)
                         throw MyFtpErrors(ErrorReadSocket);
+
+                    while (auto cmd = this->_clients[i].nextCommand()) {
+                        this->_handleCommand(this->_clients[i], *cmd);
                     }
                 }
 
-                if (std::string& outputBuffer = this->_clients[i].getSession()->getOutputBuffer();
-                    pfds[i + 1].revents & POLLOUT && pfds[i + 1].fd != this->_serverSession.getControlSocket() &&
-                    !outputBuffer.empty()) {
-                    write(this->_clients[i].getPfd().fd, outputBuffer.data(), outputBuffer.size());
-                    outputBuffer = "";
-                }
-                if (pfds[i + 1].revents & POLLNVAL) {
-                    std::cout << "Client disconnected" << std::endl;
+                if (this->_poller.isWritable(clientFd))
+                    this->_clients[i].flushOutput();
+
+                if (this->_poller.isInvalid(clientFd) ||
+                    this->_poller.hasError(clientFd) ||
+                    this->_poller.hasHangup(clientFd) ||
+                    this->_clients[i].mustLogOff()) {
+                    this->_poller.remove(clientFd);
                     this->_disconnectClient(i, false);
-                }
-                if (this->_clients[i].mustLogOff()) {
-                    std::cout << "Client disconnected" << std::endl;
-                    this->_disconnectClient(i, true);
                 }
             }
         }

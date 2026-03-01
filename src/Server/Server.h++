@@ -7,10 +7,10 @@
 #include <map>
 #include <string>
 #include <vector>
-#include <poll.h>
 
 #include "Client/Client.h++"
 #include "FtpSession/FtpSession.h++"
+#include "Poller/Poller.h++"
 
 namespace MyFtp {
     class SignalHandler {
@@ -27,11 +27,9 @@ namespace MyFtp {
         std::vector<Client> _clients;
         std::map<std::string, std::function<void (Client&, const std::string&)>> _funcMap;
 
-        void _bind();
-        void _listen() const;
+        Poller _poller;
 
         void _acceptClientConnection();
-        [[nodiscard]] bool _isServerSocketForPollIn(const pollfd& socket) const;
         void _disconnectClient(size_t& clientIndex, bool needToClose);
         void _handleCommand(Client& client, const std::string& command);
 
