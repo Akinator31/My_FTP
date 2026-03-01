@@ -38,11 +38,12 @@ namespace MyFtp {
             {"PWD", "PWD - Print the current working directory."},
             {"NOOP", "NOOP - No operation (keeps the connection alive)."},
             {"HELP", "HELP [<command>] - Display help information."},
+            {"DELE", "DELE <pathname> - Delete file on the server"}
         };
 
         static inline const std::string _helpGlobalMessage =
             "The following commands are recognized:\n"
-            " USER PASS CWD CDUP QUIT PWD NOOP HELP";
+            " USER PASS CWD CDUP QUIT PWD NOOP HELP DELE";
 
     public:
         /**
@@ -132,5 +133,16 @@ namespace MyFtp {
         * @param command The full command string (should just be "QUIT").
         */
         static void help(Client& client, const std::string& command);
+
+        /**
+        * @brief Handles the DELE command.
+        *
+        * Sends a "250 Requested file action okay, completed" reply. The client must be logged in and have
+        * the permission to delete the file.
+        *
+        * @param client The client that sended the command.
+        * @param command The full command string (should just be "QUIT").
+        */
+        static void dele(Client& client, const std::string& command);
     };
 }

@@ -178,4 +178,46 @@ namespace MyFtp {
 
         client.sendReply(static_cast<replyCode>(0), output.str());
     }
+
+    void Commands::dele(Client& client, const std::string& command) {
+        std::istringstream ss(command);
+        std::stringstream output;
+        std::string file;
+
+        if (!client.isClientAlreadyLoggedIn()) {
+            client.sendReply(NOT_LOGGED_IN_530);
+            return;
+        }
+
+        if (std::string commandName; !(ss >> commandName >> file)) {
+            client.sendReply(SYNTAX_ERROR_ARGS_501);
+            return;
+        }
+
+        std::filesystem::path path;
+
+        if (file.starts_with("/"))
+            path = client.getRootPath() / file.substr(1);
+        else
+            path = client.getRootPath() / file;
+
+        if (!Utils::isPathInsideTheRootPath(client.getRootPath(), path)) {
+            client.sendReply(FILE_UNAVAILABLE_550);
+            return;
+        }
+
+        if (!exists(path)) {
+            client.sendReply(FILE_UNAVAILABLE_550);
+            return;
+        }
+
+        std::filesystem::perms perms = std::filesystem::status(path).permissions();
+
+        if ((perms & std::filesystem::perms::owner_write) != std::filesystem::perms::none) {
+            std::filesystem::remove(path);
+            client.sendReply(REQUEST_FILE_ACTION_OK_250);
+            return;
+        }
+        client.sendReply(FILE_UNAVAILABLE_550);
+    }
 }
