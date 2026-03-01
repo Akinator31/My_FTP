@@ -100,5 +100,11 @@ namespace MyFtp {
          * @return The file descriptor, or -1 if the socket is closed.
          */
         [[nodiscard]] int fd() const;
+
+        /**
+         * @brief Gets the sockaddr_in struct of the socket.
+         * @return The sockaddr_in.
+         */
+        [[nodiscard]] sockaddr_in& getSin();
     };
 }

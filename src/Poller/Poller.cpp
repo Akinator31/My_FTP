@@ -4,6 +4,10 @@
 
 #include "Poller.h++"
 
+#include <iostream>
+
+#include "Client/Client.h++"
+
 namespace MyFtp {
     short Poller::_reventOf(const int fd) {
         if (!this->_fdIndex.contains(fd))
@@ -61,4 +65,18 @@ namespace MyFtp {
     bool Poller::hasHangup(const int fd) {
         return this->_reventOf(fd) & POLLHUP;
     }
+
+    void Poller::handleAwaitingDataConnection(Client& client) {
+        Socket& dataTransferSocket = client.getDataTransferSocket();
+
+        if (!this->_fdIndex.contains(dataTransferSocket.fd()))
+            this->add(dataTransferSocket.fd(), POLLIN);
+
+        if (this->isReadable(dataTransferSocket.fd()) && client.getDataTransferMode() == AWAITING_PASSIVE_CONNECTION) {
+            Socket passiveDataSocket = dataTransferSocket.accept();
+            dataTransferSocket = std::move(passiveDataSocket);
+            client.setDataTransferMode(PASSIVE);
+        }
+    }
 }
+

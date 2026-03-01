@@ -6,6 +6,7 @@
 #include <filesystem>
 #include "Utils.h++"
 
+#include <format>
 #include <iostream>
 
 #include "Errors/MyFtpErrors.h++"
@@ -45,32 +46,28 @@ namespace MyFtp {
         }
     }
 
-    std::string Utils::formatPASVResponse(Client& client, sockaddr_in& sin) {
-        std::string result;
+    std::string Utils::formatPASVResponse(Client& client) {
         unsigned char* ip;
-        unsigned short port;
+        sockaddr_in sin{};
+        socklen_t sin_size = sizeof(sin);
+
+        getsockname(client.getDataTransferSocket().fd(), reinterpret_cast<sockaddr*>(&sin),
+                    &sin_size);
+        const unsigned short port = ntohs(sin.sin_port);
 
         if (sin.sin_addr.s_addr == INADDR_ANY) {
-            sockaddr_in clientSin = client.getSession()->getControlSocket().getSin();
+            sockaddr_in& clientSin = client.getSession()->getControlSocket().getSin();
             ip = reinterpret_cast<unsigned char*>(&clientSin.sin_addr.s_addr);
-            port = clientSin.sin_port;
-
-            std::cout << "Port client : " << clientSin.sin_port << std::endl;
-        }
-        else {
+        } else {
             ip = reinterpret_cast<unsigned char*>(&sin.sin_addr.s_addr);
-            port = sin.sin_port;
-            std::cout << "Port sin : " << sin.sin_port << std::endl;
         }
 
         const unsigned char p1 = port / 256;
         const unsigned char p2 = port % 256;
 
-        char buffer[128];
+        std::string result = std::format("227 Entering Passive Mode ({}, {}, {}, {}, {}, {})\r\n", ip[0], ip[1], ip[2],
+                                         ip[3], p1, p2);
 
-        snprintf(buffer, sizeof(buffer), "227 Entering Passive Mode (%u, %u, %u, %u, %u, %u)", ip[0], ip[1], ip[2],
-                 ip[3], p1, p2);
-
-        return buffer;
+        return result;
     }
 }

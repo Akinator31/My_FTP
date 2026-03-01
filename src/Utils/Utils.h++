@@ -47,9 +47,9 @@ namespace MyFtp {
 
         /**
          * Format the PASV response from a sockaddr_in struct.
-         * @param sin Struct that contain socket information.
+         * @param client The client
          * @return The formatted string for the pasv command.
          */
-        static std::string formatPASVResponse(Client& client, struct sockaddr_in& sin);
+        static std::string formatPASVResponse(Client& client);
     };
 }

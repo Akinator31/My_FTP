@@ -3,6 +3,7 @@
 //
 
 #include "Socket.h++"
+
 #include <unistd.h>
 #include <sys/socket.h>
 
@@ -78,7 +79,10 @@ namespace MyFtp {
         if (newSocket == -1)
             throw MyFtpErrors(ErrorAcceptSocket);
 
-        return Socket(newSocket);
+        Socket newS(newSocket);
+        newS._socketConfig = newSocketConfig;
+
+        return newS;
     }
 
     ssize_t Socket::read(void* buffer, const size_t size) const {
@@ -91,5 +95,9 @@ namespace MyFtp {
 
     int Socket::fd() const {
         return this->_fd;
+    }
+
+    sockaddr_in& Socket::getSin() {
+        return this->_socketConfig;
     }
 }

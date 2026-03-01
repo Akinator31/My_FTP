@@ -41,6 +41,7 @@ namespace MyFtp {
             {"NOOP", &Commands::noop},
             {"HELP", &Commands::help},
             {"DELE", &Commands::dele},
+            {"PASV", &Commands::pasv},
         };
 
         this->_poller.add(this->_serverSession.getControlSocket().fd(), POLLIN);
@@ -63,8 +64,11 @@ namespace MyFtp {
 
         this->_poller.add(newClientSocket, POLLIN | POLLOUT);
 
+        Socket newSocket(newClientSocket);
+        newSocket.getSin() = clientConfig;
+
         this->_clients.emplace_back(newClientSocket,
-                                    std::make_unique<FtpSession>(FTPClient, Socket(newClientSocket)), this->_path);
+                                    std::make_unique<FtpSession>(FTPClient, std::move(newSocket)), this->_path);
 
         this->_clients.back().sendReply(SERVICE_READY_220);
     }
@@ -85,8 +89,7 @@ namespace MyFtp {
 
         if (this->_funcMap.contains(name)) {
             this->_funcMap[name](client, command);
-        }
-        else {
+        } else {
             client.sendReply(SYNTAX_ERROR_COMMAND_500);
         }
     }
@@ -100,13 +103,17 @@ namespace MyFtp {
                     break;
                 throw MyFtpErrors(ErrorPollSocket);
             }
+
             if (this->_poller.isReadable(this->_serverSession.getControlSocket().fd())) {
                 this->_acceptClientConnection();
                 continue;
             }
 
             for (size_t i = 0; i < this->_clients.size(); i++) {
-                const int clientFd = this->_clients[i].getSession()->getControlSocket().fd();
+                Client& client = this->_clients[i];
+                const int clientFd = client.getSession()->getControlSocket().fd();
+
+                this->_poller.handleAwaitingDataConnection(client);
 
                 if (this->_poller.isReadable(clientFd)) {
                     const auto result = this->_clients[i].readIncoming();

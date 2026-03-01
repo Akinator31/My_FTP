@@ -119,7 +119,7 @@ namespace MyFtp {
         * The command should have no arguments.
         *
         * @param client The client that sended the command.
-        * @param command The full command string (should just be "QUIT").
+        * @param command The full command string.
         */
         static void noop(Client& client, const std::string& command);
 
@@ -130,7 +130,7 @@ namespace MyFtp {
         * The command should have no arguments.
         *
         * @param client The client that sended the command.
-        * @param command The full command string (should just be "QUIT").
+        * @param command The full command string.
         */
         static void help(Client& client, const std::string& command);
 
@@ -141,8 +141,18 @@ namespace MyFtp {
         * the permission to delete the file.
         *
         * @param client The client that sended the command.
-        * @param command The full command string (should just be "QUIT").
+        * @param command The full command string.
         */
         static void dele(Client& client, const std::string& command);
+
+        /**
+        * @brief Handles the PASV command.
+        *
+        * Sends a "227 Entering Passive Mode (h1,h2,h3,h4,p1,p2)" reply. The client must be logged in.
+        *
+        * @param client The client that sended the command.
+        * @param command The full command string.
+        */
+        static void pasv(Client& client, const std::string& command);
     };
 }
