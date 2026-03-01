@@ -5,7 +5,8 @@
 #pragma once
 #include <map>
 #include <string>
-#include <netinet/in.h>
+
+#include "Socket/Socket.h++"
 
 namespace MyFtp {
     enum FtpSessionType {
@@ -14,9 +15,8 @@ namespace MyFtp {
     };
 
     class FtpSession {
-        int _controlSocket;
-        int _dataSocket;
-        sockaddr_in _socketConfiguration{};
+        Socket _controlSocket;
+        Socket _dataSocket;
         FtpSessionType _sessionType;
         std::string _commandBuffer;
         std::string _outputBuffer;
@@ -24,13 +24,10 @@ namespace MyFtp {
         static const std::map<int, std::string> replyCode;
 
     public:
-        FtpSession(FtpSessionType type, int controlSocket);
+        FtpSession(FtpSessionType type, Socket&& controlSocket);
 
-        [[nodiscard]] int getControlSocket() const;
-        sockaddr_in& getSocketConfiguration();
+        [[nodiscard]] Socket& getControlSocket();
         std::string& getCommandBuffer();
         std::string& getOutputBuffer();
-
-        void setSocketConfiguration(const sockaddr_in& config);
     };
 }

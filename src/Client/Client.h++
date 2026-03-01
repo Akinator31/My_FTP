@@ -5,6 +5,7 @@
 #pragma once
 #include <filesystem>
 #include <memory>
+#include <optional>
 #include <string>
 #include <sys/poll.h>
 
@@ -28,7 +29,7 @@ namespace MyFtp {
     };
 
     class Client {
-        pollfd _pfd;
+        int _fd;
         std::unique_ptr<FtpSession> _session;
         std::string _username = {};
         std::string _password = "placeHolder";
@@ -54,10 +55,15 @@ namespace MyFtp {
         };
 
     public:
-        Client(pollfd pfd, std::unique_ptr<FtpSession> session, const std::string& rootPath);
+        enum ReadResult {
+            Ok,
+            Disconnected,
+            Error
+        };
+
+        Client(int fd, std::unique_ptr<FtpSession> session, const std::string& rootPath);
         void sendReply(replyCode code);
 
-        pollfd& getPfd();
         std::unique_ptr<FtpSession>& getSession();
         std::string& getUsername();
         std::string& getPassword();
@@ -68,5 +74,9 @@ namespace MyFtp {
         void userLoggedIn();
         [[nodiscard]] bool mustLogOff() const;
         [[nodiscard]] bool isClientAlreadyLoggedIn() const;
+
+        ReadResult readIncoming();
+        [[nodiscard]] std::optional<std::string> nextCommand() const;
+        void flushOutput();
     };
 }

@@ -7,27 +7,19 @@
 #include "Errors/MyFtpErrors.h++"
 
 namespace MyFtp {
-    FtpSession::FtpSession(const FtpSessionType type, const int controlSocket) {
-        if (controlSocket == -1)
+    FtpSession::FtpSession(const FtpSessionType type, Socket&& controlSocket) {
+        if (controlSocket.fd() == -1)
             throw MyFtpErrors(ErrorCreateSocket);
 
-        this->_controlSocket = controlSocket;
+        this->_controlSocket = std::move(controlSocket);
         this->_commandBuffer = "";
         this->_outputBuffer = {};
         this->_sessionType = type;
-        this->_dataSocket = -1;
+        this->_dataSocket = Socket(-1);
     }
 
-    int FtpSession::getControlSocket() const {
+    Socket& FtpSession::getControlSocket() {
         return this->_controlSocket;
-    }
-
-    void FtpSession::setSocketConfiguration(const sockaddr_in& config) {
-        this->_socketConfiguration = config;
-    }
-
-    sockaddr_in& FtpSession::getSocketConfiguration() {
-        return this->_socketConfiguration;
     }
 
     std::string& FtpSession::getCommandBuffer() {
