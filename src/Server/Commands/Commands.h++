@@ -29,6 +29,21 @@ namespace MyFtp {
          */
         static int _setWorkingDirectory(Client& client, const std::filesystem::path& path);
 
+        static inline const std::map<std::string, std::string> _helpFuncMessages = {
+            {"USER", "USER <username> - Specify the username for authentication."},
+            {"PASS", "PASS <password> - Specify the password for authentication."},
+            {"CWD", "CWD <pathname> - Change the current working directory."},
+            {"CDUP", "CDUP - Change to the parent directory."},
+            {"QUIT", "QUIT - Close the connection."},
+            {"PWD", "PWD - Print the current working directory."},
+            {"NOOP", "NOOP - No operation (keeps the connection alive)."},
+            {"HELP", "HELP [<command>] - Display help information."},
+        };
+
+        static inline const std::string _helpGlobalMessage =
+            "The following commands are recognized:\n"
+            " USER PASS CWD CDUP QUIT PWD NOOP HELP";
+
     public:
         /**
          * @brief Handles the USER command.
@@ -106,5 +121,16 @@ namespace MyFtp {
         * @param command The full command string (should just be "QUIT").
         */
         static void noop(Client& client, const std::string& command);
+
+        /**
+        * @brief Handles the HELP command.
+        *
+        * Sends a "214 Help message" reply
+        * The command should have no arguments.
+        *
+        * @param client The client that sended the command.
+        * @param command The full command string (should just be "QUIT").
+        */
+        static void help(Client& client, const std::string& command);
     };
 }
