@@ -70,4 +70,28 @@ namespace MyFtp {
 
         return result;
     }
+
+    std::optional<std::array<int, 6>> Utils::parsePORTCommand(const std::string& command) {
+        std::array<int, 6> result{};
+
+        std::string_view line(command);
+
+        if (line.substr(0, 5) == "PORT ")
+            line.remove_prefix(5);
+
+        for (int i = 0; i < 6; i++) {
+            auto [ptr, errorCode] = std::from_chars(line.data(), line.data() + line.size(), result[i]);
+
+            if (errorCode != std::errc()) {
+                return std::nullopt;
+            }
+
+            const size_t consumed = ptr - line.data();
+
+            if (i < 5)
+                line.remove_prefix(consumed + 1);
+        }
+
+        return result;
+    }
 }

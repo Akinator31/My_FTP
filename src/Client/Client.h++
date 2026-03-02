@@ -48,6 +48,11 @@ namespace MyFtp {
         AWAITING_PASSIVE_CONNECTION
     };
 
+    struct activeTransferModeSettings {
+        std::string ip;
+        unsigned short port;
+    };
+
     /**
      * @class Client
      * @brief Represents a single FTP client that is connected to the server.
@@ -68,6 +73,7 @@ namespace MyFtp {
 
         Socket _dataSocket;
         dataTransferMode _mode = UNKNOWN;
+        activeTransferModeSettings _activeModeSettings;
 
         std::map<replyCode, std::string> _replyMessage = {
             {COMMAND_OK_200, "200 Command okay.\r\n"},
@@ -146,7 +152,7 @@ namespace MyFtp {
          * @brief Gets the current virtual working directory of the client.
          * @return A reference to the current path.
          */
-        std::string getVirtualPath() const;
+        [[nodiscard]] std::string getVirtualPath() const;
 
         /**
          * @brief Marks the client for disconnection. It will be disconnected on the next loop.
@@ -214,5 +220,12 @@ namespace MyFtp {
          * If the output buffer is empty, this function does nothing.
          */
         void flushOutput();
+
+        /**
+         * Set the active mode settings.
+         * @param ip ip address as a string
+         * @param port The port
+         */
+        void setActiveModeSetting(const std::string& ip, unsigned short port);
     };
 }

@@ -3,6 +3,8 @@
 //
 
 #pragma once
+#include <optional>
+#include <string>
 #include <netinet/in.h>
 
 namespace MyFtp {
@@ -57,15 +59,22 @@ namespace MyFtp {
         /**
          * @brief Binds the socket to a specific port on all network interfaces.
          * @param port The port number you want to bind to.
+         * @param socketConfigOpt The socket config if you want to use yours
          * @throws MyFtpErrors if the bind failed.
          */
-        void bind(uint16_t port);
+        void bind(uint16_t port, const std::optional<sockaddr_in>& socketConfigOpt = std::nullopt);
 
         /**
          * @brief Puts the socket in a listening state so it can accept incomming connections.
          * @throws MyFtpErrors if listen failed.
          */
         void listen() const;
+
+        /**
+         * Establish a connection to a remote
+         * @return The return of the connect function
+         */
+        int connect(const std::string& ip, unsigned short port) const;
 
         /**
          * @brief Accepts a new incomming connection and returns a new Socket for it.
