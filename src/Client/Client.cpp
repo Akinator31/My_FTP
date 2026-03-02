@@ -10,7 +10,7 @@
 
 namespace MyFtp {
     Client::Client(const int fd, std::unique_ptr<FtpSession> session, const std::string& rootPath) :
-        _session(std::move(session)), _currentPath(rootPath) {
+        _session(std::move(session)), _currentPath(rootPath), _activeModeSettings() {
         this->_fd = fd;
         this->_rootPath = std::filesystem::canonical(rootPath);
     }
@@ -119,5 +119,12 @@ namespace MyFtp {
         this->_session->getControlSocket().write(outputBuffer.data(), outputBuffer.size());
 
         outputBuffer = "";
+    }
+
+    void Client::setActiveModeSetting(const std::string& ip, const unsigned short port) {
+        this->_activeModeSettings = {
+            .ip = ip,
+            .port = port,
+        };
     }
 }
