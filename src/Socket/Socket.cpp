@@ -5,6 +5,7 @@
 #include "Socket.h++"
 
 #include <unistd.h>
+#include <arpa/inet.h>
 #include <sys/socket.h>
 
 #include "Errors/MyFtpErrors.h++"
@@ -46,15 +47,21 @@ namespace MyFtp {
         }
     }
 
-    void Socket::bind(const uint16_t port) {
-        sockaddr_in socketConfig = {
-            .sin_family = AF_INET,
-            .sin_port = htons(port),
-            .sin_addr = {
-                .s_addr = INADDR_ANY
-            },
-            .sin_zero = {}
-        };
+    void Socket::bind(const uint16_t port, const std::optional<sockaddr_in>& socketConfigOpt) {
+        sockaddr_in socketConfig = {};
+
+        if (socketConfigOpt.has_value()) {
+            socketConfig = socketConfigOpt.value();
+        } else {
+            socketConfig = {
+                .sin_family = AF_INET,
+                .sin_port = htons(port),
+                .sin_addr = {
+                    .s_addr = INADDR_ANY
+                },
+                .sin_zero = {}
+            };
+        }
 
         const auto* castSocketConfig = reinterpret_cast<sockaddr*>(&socketConfig);
         constexpr socklen_t castSocketConfigSize = sizeof(socketConfig);
@@ -69,6 +76,18 @@ namespace MyFtp {
         if (::listen(this->_fd, SOMAXCONN) == -1) {
             throw MyFtpErrors(ErrorListenSocket);
         }
+    }
+
+    int Socket::connect(const std::string& ip, const unsigned short port) const {
+        sockaddr_in socketConfig{};
+
+        socketConfig.sin_family = AF_INET;
+        socketConfig.sin_port = htons(port);
+
+        if (inet_pton(AF_INET, ip.data(), &socketConfig.sin_addr) <= 0) {
+            return -1;
+        }
+        return ::connect(this->_fd, reinterpret_cast<sockaddr*>(&socketConfig), sizeof(socketConfig));
     }
 
     Socket Socket::accept() const {
