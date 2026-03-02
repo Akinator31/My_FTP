@@ -51,5 +51,11 @@ namespace MyFtp {
          * @return The formatted string for the pasv command.
          */
         static std::string formatPASVResponse(Client& client);
+
+        /**
+         * Parse the PORT command from a client.
+         * @return A pair with IP as a string and the port as a short.
+         */
+        static std::optional<std::array<int, 6>> parsePORTCommand(const std::string& command);
     };
 }
