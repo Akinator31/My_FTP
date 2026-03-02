@@ -38,8 +38,7 @@ namespace MyFtp {
         }
         if (std::string username; !(ss >> commandName >> username)) {
             client.sendReply(SYNTAX_ERROR_ARGS_501);
-        }
-        else {
+        } else {
             client.getUsername() = username;
             client.sendReply(USERNAME_OK_331);
         }
@@ -65,8 +64,7 @@ namespace MyFtp {
         if (client.getUsername() == "Anonymous" && password.empty()) {
             client.sendReply(USER_LOGGED_IN_230);
             client.userLoggedIn();
-        }
-        else
+        } else
             client.sendReply(NOT_LOGGED_IN_530);
     }
 
@@ -143,7 +141,7 @@ namespace MyFtp {
             return;
         }
 
-        output << "257 \"" << client.getVirtualPath() << "\" created.\n";
+        output << "257 \"" << client.getVirtualPath() << "\" created.\r\n";
         client.sendReply(static_cast<replyCode>(0), output.str());
     }
 
@@ -219,5 +217,26 @@ namespace MyFtp {
             return;
         }
         client.sendReply(FILE_UNAVAILABLE_550);
+    }
+
+    void Commands::pasv(Client& client, const std::string& command) {
+        std::istringstream ss(command);
+        std::string rest;
+
+        if (std::string commandName; ss >> commandName >> rest) {
+            client.sendReply(SYNTAX_ERROR_ARGS_501);
+            return;
+        }
+
+        Socket& dataTransferSocket = client.getDataTransferSocket();
+
+        client.setDataTransferMode(AWAITING_PASSIVE_CONNECTION);
+        dataTransferSocket = Socket();
+
+        dataTransferSocket.bind(0);
+        dataTransferSocket.listen();
+        std::string result = Utils::formatPASVResponse(client);
+
+        client.sendReply(static_cast<replyCode>(0), result);
     }
 }

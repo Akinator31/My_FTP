@@ -44,5 +44,12 @@ namespace MyFtp {
          * @return true if the path is inside the root, false if it goes outside.
          */
         static bool isPathInsideTheRootPath(const std::filesystem::path& rootPath, const std::filesystem::path& path);
+
+        /**
+         * Format the PASV response from a sockaddr_in struct.
+         * @param client The client
+         * @return The formatted string for the pasv command.
+         */
+        static std::string formatPASVResponse(Client& client);
     };
 }

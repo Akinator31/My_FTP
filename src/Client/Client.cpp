@@ -61,6 +61,18 @@ namespace MyFtp {
         this->_currentPath = path;
     }
 
+    Socket& Client::getDataTransferSocket() {
+        return this->_dataSocket;
+    }
+
+    dataTransferMode Client::getDataTransferMode() const {
+        return this->_mode;
+    }
+
+    void Client::setDataTransferMode(const dataTransferMode mode) {
+        this->_mode = mode;
+    }
+
     void Client::userLoggedIn() {
         this->_isClientLoggedIn = true;
     }

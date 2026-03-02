@@ -8,6 +8,7 @@
 #include <sys/poll.h>
 
 namespace MyFtp {
+    class Client;
     /**
      * @class Poller
      * @brief A wrapper arround poll() that makes it easier to manage multiple file descriptors.
@@ -90,5 +91,11 @@ namespace MyFtp {
          * @return true if the connection was closed by the other side, false if not.
          */
         [[nodiscard]] bool hasHangup(int fd);
+
+        /**
+         * @brief Check if there's data socket awaiting connection.
+         * @param client The client
+         */
+        void handleAwaitingDataConnection(Client& client);
     };
 }

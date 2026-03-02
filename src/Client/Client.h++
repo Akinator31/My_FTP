@@ -10,6 +10,7 @@
 #include <sys/poll.h>
 
 #include "FtpSession/FtpSession.h++"
+#include "Poller/Poller.h++"
 
 namespace MyFtp {
     /**
@@ -35,6 +36,19 @@ namespace MyFtp {
     };
 
     /**
+     * @enum dataTransferMode
+     * @brief All the FTP data transfer mode.
+     *
+     * Each value correspond to a standard FTP data transfer mode from the RFC 959.
+     */
+    enum dataTransferMode {
+        UNKNOWN,
+        PASSIVE,
+        ACTIVE,
+        AWAITING_PASSIVE_CONNECTION
+    };
+
+    /**
      * @class Client
      * @brief Represents a single FTP client that is connected to the server.
      *
@@ -51,6 +65,9 @@ namespace MyFtp {
         std::filesystem::path _currentPath;
         bool _mustLogOff = false;
         bool _isClientLoggedIn = false;
+
+        Socket _dataSocket;
+        dataTransferMode _mode = UNKNOWN;
 
         std::map<replyCode, std::string> _replyMessage = {
             {COMMAND_OK_200, "200 Command okay.\r\n"},
@@ -83,7 +100,7 @@ namespace MyFtp {
          * @brief Creates a new Client with its socket, session and root path.
          * @param fd The file descriptor of the client socket.
          * @param session A unique pointer to the FtpSession of this client.
-         * @param rootPath The root directory path that the client is allowed to acces.
+         * @param rootPath The root directory path that the client is allowed to access.
          */
         Client(int fd, std::unique_ptr<FtpSession> session, const std::string& rootPath);
 
@@ -141,6 +158,22 @@ namespace MyFtp {
          * @param path The new path to set as current directory.
          */
         void setCurrentPath(const std::filesystem::path& path);
+
+        /**
+        * @brief Get the current data transfer mode.
+        */
+        [[nodiscard]] dataTransferMode getDataTransferMode() const;
+
+        /**
+        * @brief Set the current data transfer mode.
+        * @param mode The new data transfert mode.
+        */
+        void setDataTransferMode(dataTransferMode mode);
+
+        /**
+         * @brief Get the current data transfert socket. @see Socket
+         */
+        Socket& getDataTransferSocket();
 
         /**
          * @brief Marks the client as logged in. After this, the client can use all the commands.
