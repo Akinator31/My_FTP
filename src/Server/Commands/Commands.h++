@@ -154,5 +154,15 @@ namespace MyFtp {
         * @param command The full command string.
         */
         static void pasv(Client& client, const std::string& command);
+
+        /**
+        * @brief Handles the PORT command.
+        *
+        * Sends a "200 Command okay" reply. The client must be logged in.
+        *
+        * @param client The client that sended the command.
+        * @param command The full command string.
+        */
+        static void port(Client& client, const std::string& command);
     };
 }

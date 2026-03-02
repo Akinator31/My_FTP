@@ -8,6 +8,7 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <arpa/inet.h>
 
 #include "Server/Server.h++"
 #include "Utils/Utils.h++"
@@ -238,5 +239,37 @@ namespace MyFtp {
         std::string result = Utils::formatPASVResponse(client);
 
         client.sendReply(static_cast<replyCode>(0), result);
+    }
+
+    void Commands::port(Client& client, const std::string& command) {
+        std::istringstream ss(command);
+        std::array<int, 6> args{};
+        std::stringstream ip;
+        std::string rest;
+
+        if (!client.isClientAlreadyLoggedIn()) {
+            client.sendReply(NOT_LOGGED_IN_530);
+            return;
+        }
+
+        if (std::string commandName; !(ss >> commandName >> rest)) {
+            client.sendReply(SYNTAX_ERROR_ARGS_501);
+            return;
+        }
+
+        const std::optional<std::array<int, 6>> argsOptional = Utils::parsePORTCommand(command);
+
+        if (argsOptional.has_value()) {
+            args = argsOptional.value();
+        } else {
+            client.sendReply(SYNTAX_ERROR_ARGS_501);
+            return;
+        }
+        for (int i = 0; i < 4; i++)
+            ip << args[i];
+
+        client.setActiveModeSetting(ip.str(), args[4] * 256 + args[5]);
+        client.setDataTransferMode(ACTIVE);
+        client.sendReply(COMMAND_OK_200);
     }
 }

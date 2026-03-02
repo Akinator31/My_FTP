@@ -42,6 +42,7 @@ namespace MyFtp {
             {"HELP", &Commands::help},
             {"DELE", &Commands::dele},
             {"PASV", &Commands::pasv},
+            {"PORT", &Commands::port}
         };
 
         this->_poller.add(this->_serverSession.getControlSocket().fd(), POLLIN);

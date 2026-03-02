@@ -152,7 +152,7 @@ namespace MyFtp {
          * @brief Gets the current virtual working directory of the client.
          * @return A reference to the current path.
          */
-        std::string getVirtualPath() const;
+        [[nodiscard]] std::string getVirtualPath() const;
 
         /**
          * @brief Marks the client for disconnection. It will be disconnected on the next loop.
