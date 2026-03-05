@@ -18,19 +18,23 @@ add_executable(myftp ${SRC_FILES} src/main.cpp
         src/Errors/MyFtpErrors.h++
         src/FtpSession/FtpSession.cpp
         src/FtpSession/FtpSession.h++
-        src/Server/Commands/Commands.cpp
-        src/Server/Commands/Commands.h++
+        src/Server/Commands.cpp
+        src/Server/Commands.h++
         src/Client/Client.cpp
         src/Client/Client.h++
         src/Socket/Socket.cpp
         src/Socket/Socket.h++
         src/Poller/Poller.cpp
-        src/Poller/Poller.h++)
+        src/Poller/Poller.h++
+        src/Client/DataTransferManager.cpp
+        src/Client/DataTransferManager.h++)
 target_include_directories(myftp PRIVATE include src)
-target_compile_options(myftp PRIVATE -Wall -Wextra -Werror)
+target_compile_options(myftp PRIVATE -Wall -Wextra -Werror -g3 -fsanitize=address)
+target_link_options(myftp PRIVATE -g3 -fsanitize=address)
 
 file(GLOB_RECURSE TEST_FILES "tests/*.cpp")
 add_executable(unit_tests ${SRC_FILES} ${TEST_FILES})
 target_include_directories(unit_tests PRIVATE include src)
+target_link_libraries(myftp PRIVATE criterion)
 
 target_link_libraries(unit_tests PRIVATE ${CRITERION_LIB})

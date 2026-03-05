@@ -67,15 +67,13 @@ namespace MyFtp {
     }
 
     void Poller::handleAwaitingDataConnection(Client& client) {
-        Socket& dataTransferSocket = client.getDataTransferSocket();
+        DataTransferManager& manager = client.getDataTransferManager();
 
-        if (!this->_fdIndex.contains(dataTransferSocket.fd()))
-            this->add(dataTransferSocket.fd(), POLLIN);
+        if (!this->_fdIndex.contains(manager.getDataSocket().fd()))
+            this->add(manager.getDataSocket().fd(), POLLIN);
 
-        if (this->isReadable(dataTransferSocket.fd()) && client.getDataTransferMode() == AWAITING_PASSIVE_CONNECTION) {
-            Socket passiveDataSocket = dataTransferSocket.accept();
-            dataTransferSocket = std::move(passiveDataSocket);
-            client.setDataTransferMode(PASSIVE);
+        if (this->isReadable(manager.getDataSocket().fd()) && manager.isMode(AWAITING_PASSIVE_CONNECTION)) {
+            manager.acceptPassiveConnection();
         }
     }
 }

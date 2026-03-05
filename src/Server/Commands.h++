@@ -164,5 +164,16 @@ namespace MyFtp {
         * @param command The full command string.
         */
         static void port(Client& client, const std::string& command);
+
+        /**
+        * @brief Handles the LIST command.
+        *
+        * Sends a "150 File status okay; about to open data connection" reply then a "226 Closing data connection".
+        * The client must be logged in and selected a data transfer mode
+        *
+        * @param client The client that sended the command.
+        * @param command The full command string.
+        */
+        static void list(Client& client, const std::string& command);
     };
 }

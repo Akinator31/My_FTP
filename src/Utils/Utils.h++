@@ -46,13 +46,6 @@ namespace MyFtp {
         static bool isPathInsideTheRootPath(const std::filesystem::path& rootPath, const std::filesystem::path& path);
 
         /**
-         * Format the PASV response from a sockaddr_in struct.
-         * @param client The client
-         * @return The formatted string for the pasv command.
-         */
-        static std::string formatPASVResponse(Client& client);
-
-        /**
          * Parse the PORT command from a client.
          * @return A pair with IP as a string and the port as a short.
          */

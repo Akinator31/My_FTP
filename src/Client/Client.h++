@@ -7,8 +7,8 @@
 #include <memory>
 #include <optional>
 #include <string>
-#include <sys/poll.h>
 
+#include "DataTransferManager.h++"
 #include "FtpSession/FtpSession.h++"
 #include "Poller/Poller.h++"
 
@@ -20,9 +20,12 @@ namespace MyFtp {
      * Each value correspond to a standard FTP reply code from the RFC 959.
      */
     enum replyCode {
+        FILE_STATUS_OK_150, ///< File status okay; about to open data connection.
+
         COMMAND_OK_200, ///< The command was executed succesfully.
         SERVICE_READY_220, ///< The server is ready for a new user.
         SERVICE_CLOSING_221, ///< The server is closing the connection.
+        CLOSING_DATA_226, ///< Closing data connection.
         USER_LOGGED_IN_230, ///< The user is now logged in.
         REQUEST_FILE_ACTION_OK_250, ///< The requested file action was completed.
 
@@ -33,24 +36,6 @@ namespace MyFtp {
         SYNTAX_ERROR_ARGS_501, ///< The arguments of the command are wrong.
         NOT_LOGGED_IN_530, ///< The user is not logged in yet.
         FILE_UNAVAILABLE_550, ///< The requested file is not available or doesnt exist.
-    };
-
-    /**
-     * @enum dataTransferMode
-     * @brief All the FTP data transfer mode.
-     *
-     * Each value correspond to a standard FTP data transfer mode from the RFC 959.
-     */
-    enum dataTransferMode {
-        UNKNOWN,
-        PASSIVE,
-        ACTIVE,
-        AWAITING_PASSIVE_CONNECTION
-    };
-
-    struct activeTransferModeSettings {
-        std::string ip;
-        unsigned short port;
     };
 
     /**
@@ -71,14 +56,15 @@ namespace MyFtp {
         bool _mustLogOff = false;
         bool _isClientLoggedIn = false;
 
-        Socket _dataSocket;
-        dataTransferMode _mode = UNKNOWN;
-        activeTransferModeSettings _activeModeSettings;
+        DataTransferManager _transferManager;
 
         std::map<replyCode, std::string> _replyMessage = {
+            {FILE_STATUS_OK_150, "150 File status okay; about to open data connection.\r\n"},
+
             {COMMAND_OK_200, "200 Command okay.\r\n"},
             {SERVICE_READY_220, "220 Service ready for new user.\r\n"},
             {SERVICE_CLOSING_221, "221 Service closing control connection.\r\n"},
+            {CLOSING_DATA_226, "226 Closing data connection.\r\n"},
             {USER_LOGGED_IN_230, "230 User logged in, proceed.\r\n"},
             {REQUEST_FILE_ACTION_OK_250, "250 Requested file action okay, completed.\r\n"},
 
@@ -166,22 +152,6 @@ namespace MyFtp {
         void setCurrentPath(const std::filesystem::path& path);
 
         /**
-        * @brief Get the current data transfer mode.
-        */
-        [[nodiscard]] dataTransferMode getDataTransferMode() const;
-
-        /**
-        * @brief Set the current data transfer mode.
-        * @param mode The new data transfert mode.
-        */
-        void setDataTransferMode(dataTransferMode mode);
-
-        /**
-         * @brief Get the current data transfert socket. @see Socket
-         */
-        Socket& getDataTransferSocket();
-
-        /**
          * @brief Marks the client as logged in. After this, the client can use all the commands.
          */
         void userLoggedIn();
@@ -221,11 +191,6 @@ namespace MyFtp {
          */
         void flushOutput();
 
-        /**
-         * Set the active mode settings.
-         * @param ip ip address as a string
-         * @param port The port
-         */
-        void setActiveModeSetting(const std::string& ip, unsigned short port);
+        DataTransferManager& getDataTransferManager();
     };
 }

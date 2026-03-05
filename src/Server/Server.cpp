@@ -4,6 +4,7 @@
 
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <sys/wait.h>
 #include <poll.h>
 #include <iostream>
 #include <memory>
@@ -13,9 +14,10 @@
 
 #include <csignal>
 #include <sstream>
+#include <criterion/logging.h>
 
 #include "Client/Client.h++"
-#include "Commands/Commands.h++"
+#include "Commands.h++"
 #include "FtpSession/FtpSession.h++"
 #include "Errors/MyFtpErrors.h++"
 
@@ -42,7 +44,8 @@ namespace MyFtp {
             {"HELP", &Commands::help},
             {"DELE", &Commands::dele},
             {"PASV", &Commands::pasv},
-            {"PORT", &Commands::port}
+            {"PORT", &Commands::port},
+            {"LIST", &Commands::list},
         };
 
         this->_poller.add(this->_serverSession.getControlSocket().fd(), POLLIN);
@@ -88,6 +91,8 @@ namespace MyFtp {
 
         commandSs >> name;
 
+        std::cout << "COMMAND : " << command << std::endl;
+
         if (this->_funcMap.contains(name)) {
             this->_funcMap[name](client, command);
         } else {
@@ -112,9 +117,13 @@ namespace MyFtp {
 
             for (size_t i = 0; i < this->_clients.size(); i++) {
                 Client& client = this->_clients[i];
+                DataTransferManager& manager = client.getDataTransferManager();
                 const int clientFd = client.getSession()->getControlSocket().fd();
 
                 this->_poller.handleAwaitingDataConnection(client);
+
+                if (manager.updateDataTransfer() == CLOSING)
+                    client.sendReply(CLOSING_DATA_226);
 
                 if (this->_poller.isReadable(clientFd)) {
                     const auto result = this->_clients[i].readIncoming();

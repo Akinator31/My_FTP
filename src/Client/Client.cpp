@@ -6,11 +6,16 @@
 
 #include "Client.h++"
 
+#include <iostream>
+
 #include "Errors/MyFtpErrors.h++"
 
 namespace MyFtp {
-    Client::Client(const int fd, std::unique_ptr<FtpSession> session, const std::string& rootPath) :
-        _session(std::move(session)), _currentPath(rootPath), _activeModeSettings() {
+    Client::Client(const int fd, std::unique_ptr<FtpSession> session, const std::string& rootPath) : _transferManager(
+        session->getControlSocket()) {
+        std::cout << "Control socket fd : " << session->getControlSocket().fd() << std::endl;
+        this->_session = std::move(session);
+        this->_currentPath = rootPath;
         this->_fd = fd;
         this->_rootPath = std::filesystem::canonical(rootPath);
     }
@@ -55,22 +60,17 @@ namespace MyFtp {
         if (!_replyMessage.contains(code))
             throw MyFtpErrors(ErrorReplyCode);
         this->_session->getOutputBuffer().append(_replyMessage[code]);
+
+        if (code == CLOSING_DATA_226) {
+            std::cout << "CLOSING DATA MESSAGE RECEIVE!" << std::endl;
+        }
+
+        if (code == FILE_STATUS_OK_150)
+            this->getDataTransferManager().checkCurrentTransfer();
     }
 
     void Client::setCurrentPath(const std::filesystem::path& path) {
         this->_currentPath = path;
-    }
-
-    Socket& Client::getDataTransferSocket() {
-        return this->_dataSocket;
-    }
-
-    dataTransferMode Client::getDataTransferMode() const {
-        return this->_mode;
-    }
-
-    void Client::setDataTransferMode(const dataTransferMode mode) {
-        this->_mode = mode;
     }
 
     void Client::userLoggedIn() {
@@ -121,10 +121,7 @@ namespace MyFtp {
         outputBuffer = "";
     }
 
-    void Client::setActiveModeSetting(const std::string& ip, const unsigned short port) {
-        this->_activeModeSettings = {
-            .ip = ip,
-            .port = port,
-        };
+    DataTransferManager& Client::getDataTransferManager() {
+        return this->_transferManager;
     }
 }
