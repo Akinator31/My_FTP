@@ -4,6 +4,8 @@
 
 #include "Socket.h++"
 
+#include <iostream>
+#include <ostream>
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <sys/socket.h>
@@ -85,6 +87,7 @@ namespace MyFtp {
         socketConfig.sin_port = htons(port);
 
         if (inet_pton(AF_INET, ip.data(), &socketConfig.sin_addr) <= 0) {
+            std::cout << "ERROR" << std::endl;
             return -1;
         }
         return ::connect(this->_fd, reinterpret_cast<sockaddr*>(&socketConfig), sizeof(socketConfig));

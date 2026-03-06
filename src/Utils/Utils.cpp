@@ -46,31 +46,6 @@ namespace MyFtp {
         }
     }
 
-    std::string Utils::formatPASVResponse(Client& client) {
-        unsigned char* ip;
-        sockaddr_in sin{};
-        socklen_t sin_size = sizeof(sin);
-
-        getsockname(client.getDataTransferSocket().fd(), reinterpret_cast<sockaddr*>(&sin),
-                    &sin_size);
-        const unsigned short port = ntohs(sin.sin_port);
-
-        if (sin.sin_addr.s_addr == INADDR_ANY) {
-            sockaddr_in& clientSin = client.getSession()->getControlSocket().getSin();
-            ip = reinterpret_cast<unsigned char*>(&clientSin.sin_addr.s_addr);
-        } else {
-            ip = reinterpret_cast<unsigned char*>(&sin.sin_addr.s_addr);
-        }
-
-        const unsigned char p1 = port / 256;
-        const unsigned char p2 = port % 256;
-
-        std::string result = std::format("227 Entering Passive Mode ({}, {}, {}, {}, {}, {})\r\n", ip[0], ip[1], ip[2],
-                                         ip[3], p1, p2);
-
-        return result;
-    }
-
     std::optional<std::array<int, 6>> Utils::parsePORTCommand(const std::string& command) {
         std::array<int, 6> result{};
 
@@ -92,6 +67,25 @@ namespace MyFtp {
                 line.remove_prefix(consumed + 1);
         }
 
+        return result;
+    }
+
+    std::string Utils::getOutputCommand(const std::string& commandName) {
+        std::string result;
+        FILE* pipe = popen(commandName.c_str(), "r");
+
+        if (!pipe)
+            return "FAILED TO POPEN";
+
+        char buffer[1024];
+
+        while (fgets(buffer, sizeof(buffer), pipe)) {
+            result += buffer;
+            if (result.ends_with("\n"))
+                result.pop_back();
+            result += "\r\n";
+        }
+        pclose(pipe);
         return result;
     }
 }

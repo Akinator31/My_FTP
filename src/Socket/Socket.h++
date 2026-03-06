@@ -53,9 +53,6 @@ namespace MyFtp {
          */
         Socket& operator=(Socket&& other) noexcept;
 
-        Socket(const Socket&) = delete;
-        Socket& operator=(const Socket&) = delete;
-
         /**
          * @brief Binds the socket to a specific port on all network interfaces.
          * @param port The port number you want to bind to.

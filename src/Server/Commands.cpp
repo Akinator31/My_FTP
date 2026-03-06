@@ -8,7 +8,6 @@
 #include <iostream>
 #include <sstream>
 #include <string>
-#include <arpa/inet.h>
 
 #include "Server/Server.h++"
 #include "Utils/Utils.h++"
@@ -84,6 +83,8 @@ namespace MyFtp {
 
         const std::filesystem::path combinedPath = client.getCurrentPath() / directory;
         std::filesystem::path normalizedPath = combinedPath.lexically_normal();
+
+        std::cout << "PATH : " << normalizedPath << std::endl;
 
         if (_setWorkingDirectory(client, normalizedPath))
             client.sendReply(REQUEST_FILE_ACTION_OK_250);
@@ -229,16 +230,10 @@ namespace MyFtp {
             return;
         }
 
-        Socket& dataTransferSocket = client.getDataTransferSocket();
+        DataTransferManager& manager = client.getDataTransferManager();
 
-        client.setDataTransferMode(AWAITING_PASSIVE_CONNECTION);
-        dataTransferSocket = Socket();
-
-        dataTransferSocket.bind(0);
-        dataTransferSocket.listen();
-        std::string result = Utils::formatPASVResponse(client);
-
-        client.sendReply(static_cast<replyCode>(0), result);
+        manager.setPassiveMode();
+        client.sendReply(static_cast<replyCode>(0), manager.formatPasvResponse());
     }
 
     void Commands::port(Client& client, const std::string& command) {
@@ -257,6 +252,7 @@ namespace MyFtp {
             return;
         }
 
+        DataTransferManager& manager = client.getDataTransferManager();
         const std::optional<std::array<int, 6>> argsOptional = Utils::parsePORTCommand(command);
 
         if (argsOptional.has_value()) {
@@ -268,8 +264,41 @@ namespace MyFtp {
         for (int i = 0; i < 4; i++)
             ip << args[i];
 
-        client.setActiveModeSetting(ip.str(), args[4] * 256 + args[5]);
-        client.setDataTransferMode(ACTIVE);
+        manager.setActiveMode(ip.str(), args[4] * 256 + args[5]);
         client.sendReply(COMMAND_OK_200);
+    }
+
+    void Commands::list(Client& client, const std::string& command) {
+        std::istringstream ss(command);
+        std::stringstream output;
+        std::string path;
+
+        if (!client.isClientAlreadyLoggedIn()) {
+            client.sendReply(NOT_LOGGED_IN_530);
+            return;
+        }
+
+        DataTransferManager& manager = client.getDataTransferManager();
+        std::string commandName;
+        ss >> commandName >> path;
+
+        if (manager.isMode(UNKNOWN)) {
+            client.sendReply(BAD_SEQUENCE_503);
+            return;
+        }
+
+        if (manager.isMode(ACTIVE)) {
+            client.sendReply(SYNTAX_ERROR_COMMAND_500);
+            return;
+        }
+
+        manager.setTransferContext({
+            .type = LIST,
+            .filename = "",
+            .directory = path.empty() ? client.getCurrentPath().c_str() : client.getCurrentPath() / path,
+            .response150sent = false,
+        });
+
+        client.sendReply(FILE_STATUS_OK_150);
     }
 }

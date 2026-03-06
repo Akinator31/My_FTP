@@ -3,7 +3,7 @@ SRC_DIR     	=	src
 BUILD_DIR   	=	build
 
 NAME         	= 	myftp
-TEST_NAME		=	unit_tests
+TEST_NAME		=	unittests
 
 COLOR_BLUE    := $(shell printf "\033[1;34m")
 COLOR_GREEN   := $(shell printf "\033[1;32m")
@@ -28,7 +28,7 @@ fclean: clean
 	@echo "$(COLOR_GREEN)Project cleaned!$(COLOR_RESET)"
 
 tests_run:
-	@cmake -S . -B $(BUILD_DIR)
+	@cmake -S . -B $(BUILD_DIR) -DBUILD_TESTS=on
 	@cmake --build $(BUILD_DIR) --target $(TEST_NAME)
 	@./$(BUILD_DIR)/$(TEST_NAME)
 
