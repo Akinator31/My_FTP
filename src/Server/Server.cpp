@@ -46,6 +46,7 @@ namespace MyFtp {
             {"PORT", &Commands::port},
             {"LIST", &Commands::list},
             {"RETR", &Commands::retr},
+            {"STOR", &Commands::stor},
         };
 
         this->_poller.add(this->_serverSession.getControlSocket().fd(), POLLIN);
