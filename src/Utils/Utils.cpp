@@ -69,4 +69,23 @@ namespace MyFtp {
 
         return result;
     }
+
+    std::string Utils::getOutputCommand(const std::string& commandName) {
+        std::string result;
+        FILE* pipe = popen(commandName.c_str(), "r");
+
+        if (!pipe)
+            return "FAILED TO POPEN";
+
+        char buffer[1024];
+
+        while (fgets(buffer, sizeof(buffer), pipe)) {
+            result += buffer;
+            if (result.ends_with("\n"))
+                result.pop_back();
+            result += "\r\n";
+        }
+        pclose(pipe);
+        return result;
+    }
 }

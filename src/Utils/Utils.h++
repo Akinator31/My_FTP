@@ -50,5 +50,7 @@ namespace MyFtp {
          * @return A pair with IP as a string and the port as a short.
          */
         static std::optional<std::array<int, 6>> parsePORTCommand(const std::string& command);
+
+        static std::string getOutputCommand(const std::string& commandName);
     };
 }

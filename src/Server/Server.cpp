@@ -14,7 +14,6 @@
 
 #include <csignal>
 #include <sstream>
-#include <criterion/logging.h>
 
 #include "Client/Client.h++"
 #include "Commands.h++"
@@ -90,8 +89,6 @@ namespace MyFtp {
         std::string rest = {};
 
         commandSs >> name;
-
-        std::cout << "COMMAND : " << command << std::endl;
 
         if (this->_funcMap.contains(name)) {
             this->_funcMap[name](client, command);

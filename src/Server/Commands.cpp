@@ -84,6 +84,8 @@ namespace MyFtp {
         const std::filesystem::path combinedPath = client.getCurrentPath() / directory;
         std::filesystem::path normalizedPath = combinedPath.lexically_normal();
 
+        std::cout << "PATH : " << normalizedPath << std::endl;
+
         if (_setWorkingDirectory(client, normalizedPath))
             client.sendReply(REQUEST_FILE_ACTION_OK_250);
         else
@@ -280,10 +282,20 @@ namespace MyFtp {
         std::string commandName;
         ss >> commandName >> path;
 
+        if (manager.isMode(UNKNOWN)) {
+            client.sendReply(BAD_SEQUENCE_503);
+            return;
+        }
+
+        if (manager.isMode(ACTIVE)) {
+            client.sendReply(SYNTAX_ERROR_COMMAND_500);
+            return;
+        }
+
         manager.setTransferContext({
             .type = LIST,
             .filename = "",
-            .directory = "",
+            .directory = path.empty() ? client.getCurrentPath().c_str() : client.getCurrentPath() / path,
             .response150sent = false,
         });
 

@@ -36,6 +36,7 @@ namespace MyFtp {
         CLOSING,
         SENT,
         NOTHING,
+        ERROR,
     };
 
     struct activeTransferModeSettings {
@@ -62,8 +63,8 @@ namespace MyFtp {
          * Format the PASV response from a sockaddr_in struct
          * @return The formatted string for the pasv command.
          */
-        std::string formatPasvResponse() const;
-        bool isMode(dataTransferMode mode) const;
+        [[nodiscard]] std::string formatPasvResponse() const;
+        [[nodiscard]] bool isMode(dataTransferMode mode) const;
         void setTransferContext(const TransferContext& context);
         Socket& getDataSocket();
 

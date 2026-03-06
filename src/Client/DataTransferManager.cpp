@@ -9,9 +9,10 @@
 #include <ostream>
 #include <sys/wait.h>
 
+#include "Utils/Utils.h++"
+
 namespace MyFtp {
     DataTransferManager::DataTransferManager(Socket& controlSocket) : _activeModeSettings() {
-        std::cout << "SOCKET : " << controlSocket.fd() << std::endl;
         this->_controlSocket = &controlSocket;
     }
 
@@ -21,6 +22,7 @@ namespace MyFtp {
             this->_dataSocket = Socket();
             this->_dataSocket.bind(0);
             this->_dataSocket.listen();
+            return;
         }
         if (this->_mode == AWAITING_PASSIVE_CONNECTION)
             this->_mode = PASSIVE;
@@ -44,7 +46,6 @@ namespace MyFtp {
 
     void DataTransferManager::checkCurrentTransfer() const {
         if (this->_transferContext != nullptr) {
-            std::cout << "150 response sent !" << std::endl;
             this->_transferContext->response150sent = true;
         }
     }
@@ -86,10 +87,23 @@ namespace MyFtp {
 
     dataTransferMode DataTransferManager::updateDataTransfer() {
         if (this->_transferContext != nullptr && this->_transferContext->response150sent == true) {
-            std::cout << "SENDING DATA !" << std::endl;
-            const int childPid = fork(); // gérer fork return -1;
+            if (this->_mode == ACTIVE) {
+                Socket socket;
+                if (socket.connect(this->_activeModeSettings.ip, this->_activeModeSettings.port) == -1) {
+                    this->_transferContext.reset();
+                    std::cout << "HELLO" << std::endl;
+                    return ERROR;
+                }
+                this->_dataSocket = std::move(socket);
+            }
+
+            const int childPid = fork(); // handle fork return -1;
             if (childPid == 0) {
-                [[maybe_unused]] ssize_t readBytes = this->_dataSocket.write("BONJOUR\r\n", 9);
+                if (this->_transferContext->type == LIST) {
+                    const std::string listResult = Utils::getOutputCommand(
+                        "/bin/ls -l " + this->_transferContext->directory);
+                    [[maybe_unused]] ssize_t readBytes = this->_dataSocket.write(listResult.c_str(), listResult.size());
+                }
                 exit(0);
             }
             this->_dataSocket.close();
@@ -102,8 +116,6 @@ namespace MyFtp {
             int status;
 
             if (waitpid(this->_dataTransferChildPid, &status, WNOHANG) > 0) {
-                if (WIFEXITED(status))
-                    std::cout << "CHILD EXITED WITH STATUS : " << WEXITSTATUS(status) << std::endl;
                 this->_transferContext.reset();
                 this->_dataTransferChildPid = -1;
                 this->_mode = UNKNOWN;

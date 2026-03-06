@@ -34,6 +34,7 @@ namespace MyFtp {
 
         SYNTAX_ERROR_COMMAND_500, ///< The command was not reconized.
         SYNTAX_ERROR_ARGS_501, ///< The arguments of the command are wrong.
+        BAD_SEQUENCE_503,
         NOT_LOGGED_IN_530, ///< The user is not logged in yet.
         FILE_UNAVAILABLE_550, ///< The requested file is not available or doesnt exist.
     };
@@ -73,6 +74,7 @@ namespace MyFtp {
 
             {SYNTAX_ERROR_COMMAND_500, "500 Syntax error, command unrecognized.\r\n"},
             {SYNTAX_ERROR_ARGS_501, "501 Syntax error in parameters or arguments.\r\n"},
+            {BAD_SEQUENCE_503, "503 Bad sequence of commands.\r\n"},
             {NOT_LOGGED_IN_530, "530 Not logged in.\r\n"},
             {FILE_UNAVAILABLE_550, "550 Requested action not taken.\r\n"},
         };

@@ -13,7 +13,6 @@
 namespace MyFtp {
     Client::Client(const int fd, std::unique_ptr<FtpSession> session, const std::string& rootPath) : _transferManager(
         session->getControlSocket()) {
-        std::cout << "Control socket fd : " << session->getControlSocket().fd() << std::endl;
         this->_session = std::move(session);
         this->_currentPath = rootPath;
         this->_fd = fd;
@@ -60,10 +59,6 @@ namespace MyFtp {
         if (!_replyMessage.contains(code))
             throw MyFtpErrors(ErrorReplyCode);
         this->_session->getOutputBuffer().append(_replyMessage[code]);
-
-        if (code == CLOSING_DATA_226) {
-            std::cout << "CLOSING DATA MESSAGE RECEIVE!" << std::endl;
-        }
 
         if (code == FILE_STATUS_OK_150)
             this->getDataTransferManager().checkCurrentTransfer();
