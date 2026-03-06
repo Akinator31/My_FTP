@@ -32,6 +32,8 @@ namespace MyFtp {
         USERNAME_OK_331, ///< Username is ok, now we need the password.
         NEED_ACCOUNT_332, ///< We need a account to login.
 
+        CANT_OPEN_DATA_425,
+
         SYNTAX_ERROR_COMMAND_500, ///< The command was not reconized.
         SYNTAX_ERROR_ARGS_501, ///< The arguments of the command are wrong.
         BAD_SEQUENCE_503,
@@ -71,6 +73,8 @@ namespace MyFtp {
 
             {USERNAME_OK_331, "331 User name okay, need password.\r\n"},
             {NEED_ACCOUNT_332, "332 Need account for login.\r\n"},
+
+            {CANT_OPEN_DATA_425, "425 Can't open data connection.\r\n"},
 
             {SYNTAX_ERROR_COMMAND_500, "500 Syntax error, command unrecognized.\r\n"},
             {SYNTAX_ERROR_ARGS_501, "501 Syntax error in parameters or arguments.\r\n"},
