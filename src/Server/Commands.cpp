@@ -272,7 +272,6 @@ namespace MyFtp {
 
     void Commands::list(Client& client, const std::string& command) {
         std::istringstream ss(command);
-        std::stringstream output;
         std::string path;
 
         if (!client.isClientAlreadyLoggedIn()) {
@@ -293,6 +292,41 @@ namespace MyFtp {
             .type = LIST,
             .filename = "",
             .directory = path.empty() ? client.getCurrentPath().c_str() : client.getCurrentPath() / path,
+            .response150sent = false,
+        });
+
+        client.sendReply(FILE_STATUS_OK_150);
+    }
+
+    void Commands::retr(Client& client, const std::string& command) {
+        std::istringstream ss(command);
+        std::string path;
+
+        if (!client.isClientAlreadyLoggedIn()) {
+            client.sendReply(NOT_LOGGED_IN_530);
+            return;
+        }
+
+        DataTransferManager& manager = client.getDataTransferManager();
+        std::string commandName;
+        ss >> commandName >> path;
+
+        if (manager.isMode(UNKNOWN)) {
+            client.sendReply(CANT_OPEN_DATA_425);
+            return;
+        }
+
+        const std::filesystem::path filepath = client.getCurrentPath() / path;
+        std::filesystem::perms perms = std::filesystem::status(path).permissions();
+
+        if (!exists(filepath) || !is_regular_file(filepath) || (perms & std::filesystem::perms::owner_write) ==
+            std::filesystem::perms::none)
+            client.sendReply(FILE_UNAVAILABLE_550);
+
+        manager.setTransferContext({
+            .type = RETR,
+            .filename = filepath.c_str(),
+            .directory = "",
             .response150sent = false,
         });
 

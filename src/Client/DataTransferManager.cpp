@@ -5,6 +5,7 @@
 #include "../Client/DataTransferManager.h++"
 
 #include <format>
+#include <fstream>
 #include <iostream>
 #include <ostream>
 #include <sys/wait.h>
@@ -96,6 +97,16 @@ namespace MyFtp {
                 const std::string listResult = Utils::getOutputCommand(
                     "/bin/ls -l " + this->_transferContext->directory);
                 [[maybe_unused]] ssize_t readBytes = this->_dataSocket.write(listResult.c_str(), listResult.size());
+            }
+            if (this->_transferContext->type == RETR) {
+                const size_t filesize = std::filesystem::file_size(this->_transferContext->filename);
+                std::vector<char> buffer(filesize);
+
+                std::ifstream file(this->_transferContext->filename, std::ios::binary);
+                file.read(buffer.data(), static_cast<std::streamsize>(filesize));
+
+                [[maybe_unused]] ssize_t readBytes = this->_dataSocket.write(buffer.data(), buffer.size());
+                file.close();
             }
             exit(0);
         }
