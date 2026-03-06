@@ -85,31 +85,37 @@ namespace MyFtp {
         return result;
     }
 
+    dataTransferMode DataTransferManager::handleDataTransferCommand() {
+        const int childPid = fork();
+
+        if (childPid == -1)
+            return ERROR;
+
+        if (childPid == 0) {
+            if (this->_transferContext->type == LIST) {
+                const std::string listResult = Utils::getOutputCommand(
+                    "/bin/ls -l " + this->_transferContext->directory);
+                [[maybe_unused]] ssize_t readBytes = this->_dataSocket.write(listResult.c_str(), listResult.size());
+            }
+            exit(0);
+        }
+        this->_dataSocket.close();
+        this->_dataTransferChildPid = childPid;
+        this->_transferContext->response150sent = false;
+        return SENT;
+    }
+
     dataTransferMode DataTransferManager::updateDataTransfer() {
         if (this->_transferContext != nullptr && this->_transferContext->response150sent == true) {
             if (this->_mode == ACTIVE) {
                 Socket socket;
                 if (socket.connect(this->_activeModeSettings.ip, this->_activeModeSettings.port) == -1) {
                     this->_transferContext.reset();
-                    std::cout << "HELLO" << std::endl;
                     return ERROR;
                 }
                 this->_dataSocket = std::move(socket);
             }
-
-            const int childPid = fork(); // handle fork return -1;
-            if (childPid == 0) {
-                if (this->_transferContext->type == LIST) {
-                    const std::string listResult = Utils::getOutputCommand(
-                        "/bin/ls -l " + this->_transferContext->directory);
-                    [[maybe_unused]] ssize_t readBytes = this->_dataSocket.write(listResult.c_str(), listResult.size());
-                }
-                exit(0);
-            }
-            this->_dataSocket.close();
-            this->_dataTransferChildPid = childPid;
-            this->_transferContext->response150sent = false;
-            return SENT;
+            return this->handleDataTransferCommand();
         }
 
         if (this->_dataTransferChildPid > 0) {

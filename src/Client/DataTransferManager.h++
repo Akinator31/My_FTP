@@ -53,6 +53,8 @@ namespace MyFtp {
         activeTransferModeSettings _activeModeSettings;
         std::unique_ptr<TransferContext> _transferContext = nullptr;
 
+        dataTransferMode handleDataTransferCommand();
+
     public:
         explicit DataTransferManager(Socket& controlSocket);
 

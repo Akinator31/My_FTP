@@ -84,8 +84,6 @@ namespace MyFtp {
         const std::filesystem::path combinedPath = client.getCurrentPath() / directory;
         std::filesystem::path normalizedPath = combinedPath.lexically_normal();
 
-        std::cout << "PATH : " << normalizedPath << std::endl;
-
         if (_setWorkingDirectory(client, normalizedPath))
             client.sendReply(REQUEST_FILE_ACTION_OK_250);
         else
@@ -261,8 +259,12 @@ namespace MyFtp {
             client.sendReply(SYNTAX_ERROR_ARGS_501);
             return;
         }
-        for (int i = 0; i < 4; i++)
+
+        for (int i = 0; i < 4; i++) {
             ip << args[i];
+            if (i < 3)
+                ip << ".";
+        }
 
         manager.setActiveMode(ip.str(), args[4] * 256 + args[5]);
         client.sendReply(COMMAND_OK_200);
@@ -283,12 +285,7 @@ namespace MyFtp {
         ss >> commandName >> path;
 
         if (manager.isMode(UNKNOWN)) {
-            client.sendReply(BAD_SEQUENCE_503);
-            return;
-        }
-
-        if (manager.isMode(ACTIVE)) {
-            client.sendReply(SYNTAX_ERROR_COMMAND_500);
+            client.sendReply(CANT_OPEN_DATA_425);
             return;
         }
 
