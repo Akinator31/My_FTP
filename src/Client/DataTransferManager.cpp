@@ -108,6 +108,16 @@ namespace MyFtp {
                 [[maybe_unused]] ssize_t readBytes = this->_dataSocket.write(buffer.data(), buffer.size());
                 file.close();
             }
+            if (this->_transferContext->type == STOR) {
+                std::ofstream file(this->_transferContext->filename, std::ios::binary | std::ios::trunc);
+                std::vector<char> buffer(1024);
+                ssize_t bytesRead;
+
+                while ((bytesRead = this->_dataSocket.read(buffer.data(), 1024)) > 0) {
+                    file.write(buffer.data(), bytesRead);
+                }
+                file.close();
+            }
             exit(0);
         }
         this->_dataSocket.close();

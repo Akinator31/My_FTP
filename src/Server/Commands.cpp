@@ -332,4 +332,34 @@ namespace MyFtp {
 
         client.sendReply(FILE_STATUS_OK_150);
     }
+
+    void Commands::stor(Client& client, const std::string& command) {
+        std::istringstream ss(command);
+        std::string path;
+
+        if (!client.isClientAlreadyLoggedIn()) {
+            client.sendReply(NOT_LOGGED_IN_530);
+            return;
+        }
+
+        DataTransferManager& manager = client.getDataTransferManager();
+        std::string commandName;
+        ss >> commandName >> path;
+
+        if (manager.isMode(UNKNOWN)) {
+            client.sendReply(CANT_OPEN_DATA_425);
+            return;
+        }
+
+        const std::string filepath = client.getCurrentPath() / path;
+
+        manager.setTransferContext({
+            .type = STOR,
+            .filename = filepath,
+            .directory = "",
+            .response150sent = false,
+        });
+
+        client.sendReply(FILE_STATUS_OK_150);
+    }
 }
