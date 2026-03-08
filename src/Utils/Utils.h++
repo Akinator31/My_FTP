@@ -1,6 +1,9 @@
-//
-// Created by pavel on 19/02/2026.
-//
+/**
+ * @file Utils.h++
+ * @brief Utility functions for argument parsing, path validation and command execution.
+ * @date 19/02/2026
+ * @author pavel
+ */
 
 #pragma once
 #include "Server/Server.h++"
@@ -46,11 +49,25 @@ namespace MyFtp {
         static bool isPathInsideTheRootPath(const std::filesystem::path& rootPath, const std::filesystem::path& path);
 
         /**
-         * Parse the PORT command from a client.
-         * @return A pair with IP as a string and the port as a short.
+         * @brief Parses the PORT command arguments into 6 integer values.
+         *
+         * The PORT command format is "PORT h1,h2,h3,h4,p1,p2" where h1-h4
+         * form the IP address and p1,p2 form the port (port = p1*256 + p2).
+         *
+         * @param command The raw PORT command string from the client.
+         * @return An array of 6 integers {h1, h2, h3, h4, p1, p2}, or std::nullopt if parsing fails.
          */
         static std::optional<std::array<int, 6>> parsePORTCommand(const std::string& command);
 
+        /**
+         * @brief Executes a shell command and captures its standard output.
+         *
+         * The output lines are converted to use CRLF line endings
+         * as required by the FTP protocol.
+         *
+         * @param commandName The shell command to execute (e.g. "/bin/ls -l /tmp").
+         * @return The command output as a string with CRLF line endings.
+         */
         static std::string getOutputCommand(const std::string& commandName);
     };
 }

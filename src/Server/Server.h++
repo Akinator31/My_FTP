@@ -1,6 +1,9 @@
-//
-// Created by pavel on 19/02/2026.
-//
+/**
+ * @file Server.h++
+ * @brief Main FTP server class with signal handling and client management.
+ * @date 19/02/2026
+ * @author pavel
+ */
 
 #pragma once
 #include <functional>
@@ -37,13 +40,14 @@ namespace MyFtp {
      * and calls the right handler function.
      */
     class Server {
-        std::string _path;
-        FtpSession _serverSession;
+        std::string _path; ///< The root directory path of the FTP server.
+        FtpSession _serverSession; ///< The FTP session holding the server's listening socket.
 
-        std::vector<Client> _clients;
-        std::map<std::string, std::function<void (Client&, const std::string&)>> _funcMap;
+        std::vector<Client> _clients; ///< List of currently connected clients.
+        std::map<std::string, std::function<void(Client &, const std::string &)>> _funcMap;
+        ///< Map of command names to their handler functions.
 
-        Poller _poller;
+        Poller _poller; ///< The poller used to monitor all file descriptors.
 
         /**
          * @brief Accepts a new client connection and adds it to the client list.

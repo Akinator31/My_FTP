@@ -1,6 +1,9 @@
-//
-// Created by pavel on 26/02/2026.
-//
+/**
+ * @file Socket.h++
+ * @brief RAII wrapper around POSIX TCP sockets.
+ * @date 26/02/2026
+ * @author pavel
+ */
 
 #pragma once
 #include <optional>
@@ -19,8 +22,8 @@ namespace MyFtp {
      * @note Copy is disabled, only move is allowed.
      */
     class Socket {
-        int _fd;
-        sockaddr_in _socketConfig{};
+        int _fd; ///< The file descriptor of the socket (-1 if closed/invalid).
+        sockaddr_in _socketConfig{}; ///< The socket address configuration (IP, port, family).
 
     public:
         /**
@@ -68,8 +71,10 @@ namespace MyFtp {
         void listen() const;
 
         /**
-         * Establish a connection to a remote
-         * @return The return of the connect function
+         * @brief Establishes a connection to a remote host.
+         * @param ip The IP address of the remote host (e.g. "127.0.0.1").
+         * @param port The port number of the remote host.
+         * @return 0 on success, -1 on failure.
          */
         int connect(const std::string& ip, unsigned short port) const;
 

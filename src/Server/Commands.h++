@@ -1,6 +1,9 @@
-//
-// Created by pavel on 24/02/2026.
-//
+/**
+ * @file Commands.h++
+ * @brief FTP command handlers implementation.
+ * @date 24/02/2026
+ * @author pavel
+ */
 
 #pragma once
 #include <string>
@@ -29,6 +32,11 @@ namespace MyFtp {
          */
         static int _setWorkingDirectory(Client& client, const std::filesystem::path& path);
 
+        /**
+         * @brief Map of command names to their individual help messages.
+         *
+         * Used by the HELP command when a specific command name is requested.
+         */
         static inline const std::map<std::string, std::string> _helpFuncMessages = {
             {"USER", "USER <username> - Specify the username for authentication."},
             {"PASS", "PASS <password> - Specify the password for authentication."},
@@ -38,12 +46,22 @@ namespace MyFtp {
             {"PWD", "PWD - Print the current working directory."},
             {"NOOP", "NOOP - No operation (keeps the connection alive)."},
             {"HELP", "HELP [<command>] - Display help information."},
-            {"DELE", "DELE <pathname> - Delete file on the server"}
+            {"DELE", "DELE <pathname> - Delete file on the server."},
+            {"PASV", "PASV - Enter passive mode."},
+            {"PORT", "PORT <h1,h2,h3,h4,p1,p2> - Specify address and port for active mode."},
+            {"LIST", "LIST [<pathname>] - List files in the current or specified directory."},
+            {"RETR", "RETR <pathname> - Retrieve (download) a file from the server."},
+            {"STOR", "STOR <pathname> - Store (upload) a file to the server."},
         };
 
+        /**
+         * @brief The global help message listing all recognized commands.
+         *
+         * Sent by the HELP command when no specific command is requested.
+         */
         static inline const std::string _helpGlobalMessage =
             "The following commands are recognized:\n"
-            " USER PASS CWD CDUP QUIT PWD NOOP HELP DELE";
+            " USER PASS CWD CDUP QUIT PWD NOOP HELP DELE PASV PORT LIST RETR STOR";
 
     public:
         /**

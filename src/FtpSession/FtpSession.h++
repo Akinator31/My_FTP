@@ -1,6 +1,9 @@
-//
-// Created by pavel on 23/02/2026.
-//
+/**
+ * @file FtpSession.h++
+ * @brief FTP session management with control/data sockets and I/O buffers.
+ * @date 23/02/2026
+ * @author pavel
+ */
 
 #pragma once
 #include <map>
@@ -27,13 +30,14 @@ namespace MyFtp {
      * before they get processed or sended.
      */
     class FtpSession {
-        Socket _controlSocket;
+        Socket _controlSocket; ///< The socket used for sending commands and replies.
         Socket _dataSocket;
-        FtpSessionType _sessionType;
-        std::string _commandBuffer;
-        std::string _outputBuffer;
+        ///< The socket used for data transfers (unused in this class, managed by DataTransferManager).
+        FtpSessionType _sessionType; ///< The type of this session (server or client).
+        std::string _commandBuffer; ///< Buffer for incoming command data.
+        std::string _outputBuffer; ///< Buffer for outgoing reply data.
 
-        static const std::map<int, std::string> replyCode;
+        static const std::map<int, std::string> replyCode; ///< Map of numeric reply codes to their message strings.
 
     public:
         /**

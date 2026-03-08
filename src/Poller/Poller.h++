@@ -1,6 +1,9 @@
-//
-// Created by pavel on 01/03/2026.
-//
+/**
+ * @file Poller.h++
+ * @brief Abstraction over the poll() system call for monitoring multiple file descriptors.
+ * @date 01/03/2026
+ * @author pavel
+ */
 
 #pragma once
 #include <map>
@@ -18,8 +21,8 @@ namespace MyFtp {
      * Its basicly a nicer way to use the poll() system call.
      */
     class Poller {
-        std::vector<pollfd> _pfds;
-        std::map<int, size_t> _fdIndex;
+        std::vector<pollfd> _pfds; ///< The array of pollfd structures monitored by poll().
+        std::map<int, size_t> _fdIndex; ///< Map of file descriptors to their index in _pfds.
 
         /**
          * @brief Gets the revents field of a file descriptor.
@@ -29,6 +32,9 @@ namespace MyFtp {
         short _reventOf(int fd);
 
     public:
+        /**
+         * @brief Default constructor. Creates an empty poller with no monitored file descriptors.
+         */
         Poller() = default;
 
         /**

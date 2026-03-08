@@ -1,6 +1,9 @@
-//
-// Created by pavel on 24/02/2026.
-//
+/**
+ * @file Client.h++
+ * @brief FTP client representation with session management, authentication and reply handling.
+ * @date 24/02/2026
+ * @author pavel
+ */
 
 #pragma once
 #include <filesystem>
@@ -32,11 +35,11 @@ namespace MyFtp {
         USERNAME_OK_331, ///< Username is ok, now we need the password.
         NEED_ACCOUNT_332, ///< We need a account to login.
 
-        CANT_OPEN_DATA_425,
+        CANT_OPEN_DATA_425, ///< Cannot open data connection.
 
         SYNTAX_ERROR_COMMAND_500, ///< The command was not reconized.
         SYNTAX_ERROR_ARGS_501, ///< The arguments of the command are wrong.
-        BAD_SEQUENCE_503,
+        BAD_SEQUENCE_503, ///< Bad sequence of commands (e.g. PASS before USER).
         NOT_LOGGED_IN_530, ///< The user is not logged in yet.
         FILE_UNAVAILABLE_550, ///< The requested file is not available or doesnt exist.
     };
@@ -50,17 +53,18 @@ namespace MyFtp {
      * It also handles reading commands from the client and sending replys back.
      */
     class Client {
-        int _fd;
-        std::unique_ptr<FtpSession> _session;
-        std::string _username = {};
-        std::string _password = "placeHolder";
-        std::filesystem::path _rootPath;
-        std::filesystem::path _currentPath;
-        bool _mustLogOff = false;
-        bool _isClientLoggedIn = false;
+        int _fd; ///< File descriptor of the client's control socket.
+        std::unique_ptr<FtpSession> _session; ///< The FTP session associated with this client.
+        std::string _username = {}; ///< The username provided by the USER command.
+        std::string _password = "placeHolder"; ///< The password provided by the PASS command.
+        std::filesystem::path _rootPath; ///< The root directory the client cannot navigate above.
+        std::filesystem::path _currentPath; ///< The current working directory of the client.
+        bool _mustLogOff = false; ///< Flag indicating the client should be disconnected.
+        bool _isClientLoggedIn = false; ///< Flag indicating the client has been authenticated.
 
-        DataTransferManager _transferManager;
+        DataTransferManager _transferManager; ///< Manager for data connections (active/passive).
 
+        /// @brief Map of reply codes to their corresponding FTP reply strings.
         std::map<replyCode, std::string> _replyMessage = {
             {FILE_STATUS_OK_150, "150 File status okay; about to open data connection.\r\n"},
 
@@ -197,6 +201,10 @@ namespace MyFtp {
          */
         void flushOutput();
 
+        /**
+         * @brief Gets the data transfer manager of this client.
+         * @return A reference to the DataTransferManager object.
+         */
         DataTransferManager& getDataTransferManager();
     };
 }

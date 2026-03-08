@@ -1,6 +1,9 @@
-//
-// Created by pavel on 19/02/2026.
-//
+/**
+ * @file MyFtpErrors.h++
+ * @brief Custom exception class and error types for the FTP server.
+ * @date 19/02/2026
+ * @author pavel
+ */
 
 #pragma once
 #include <exception>
@@ -35,6 +38,7 @@ namespace MyFtp {
      * set the right message for you.
      */
     class MyFtpErrors : public std::exception {
+        /// @brief Map of error types to their human-readable error messages.
         std::map<MyFtpErrorType, std::string> _errorMap = {
             {IncorrectNumberArgs, "Incorrect number of arguments!"},
             {IncorrectArgs, "Incorrect arguments!"},
@@ -49,7 +53,7 @@ namespace MyFtp {
             {ErrorReplyCode, "This reply code doesn't exist!"},
         };
 
-        std::string _errorMessage;
+        std::string _errorMessage; ///< The error message for this exception instance.
 
     public:
         /**
