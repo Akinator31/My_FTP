@@ -33,13 +33,22 @@ The `myftp` binary is generated at the project root.
 
 ## Supported commands
 
-| Command | Description              |
-|---------|--------------------------|
-| `USER`  | Set the username         |
-| `PASS`  | Set the password         |
-| `CWD`   | Change working directory |
-| `CDUP`  | Move to parent directory |
-| `QUIT`  | Close the connection     |
+| Command | Description                                      |
+|---------|--------------------------------------------------|
+| `USER`  | Specify the username for authentication          |
+| `PASS`  | Specify the password for authentication          |
+| `CWD`   | Change the current working directory             |
+| `CDUP`  | Change to the parent directory                   |
+| `QUIT`  | Close the connection                             |
+| `PWD`   | Print the current working directory              |
+| `NOOP`  | No operation (keeps the connection alive)        |
+| `HELP`  | Display help information for one or all commands |
+| `DELE`  | Delete a file on the server                      |
+| `PASV`  | Enter passive mode                               |
+| `PORT`  | Specify address and port for active mode         |
+| `LIST`  | List files in the current or specified directory |
+| `RETR`  | Retrieve (download) a file from the server       |
+| `STOR`  | Store (upload) a file to the server              |
 
 > Only anonymous login is supported (`USER Anonymous` with no password).
 
@@ -48,9 +57,12 @@ The `myftp` binary is generated at the project root.
 ```
 src/
 ├── main.cpp                  # Entry point
-├── Server/                   # Main loop, accepts incoming connections
-│   └── Commands/             # FTP command handlers
-├── Client/                   # Represents a connected client (session, state, replies)
+├── Server/
+│   ├── Server.h++/cpp        # Main loop, accepts incoming connections
+│   └── Commands.h++/cpp      # FTP command handlers
+├── Client/
+│   ├── Client.h++/cpp        # Represents a connected client (session, state, replies)
+│   └── DataTransferManager.h++/cpp  # Manages active/passive data transfers
 ├── FtpSession/               # Manages control/data sockets for a session
 ├── Socket/                   # RAII wrapper around POSIX sockets
 ├── Poller/                   # Abstraction over poll()
