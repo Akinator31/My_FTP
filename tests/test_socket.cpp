@@ -1,6 +1,10 @@
 #include <criterion/criterion.h>
 #include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 #include <unistd.h>
+#include <thread>
+#include <chrono>
 #include "Socket/Socket.h++"
 #include "Errors/MyFtpErrors.h++"
 
@@ -149,3 +153,69 @@ Test(Socket, fd_getter) {
     cr_assert_eq(sock.fd(), 42);
 }
 
+Test(Socket, get_sin) {
+    MyFtp::Socket sock;
+    sock.bind(0);
+    sockaddr_in& sin = sock.getSin();
+    cr_assert_eq(sin.sin_family, AF_INET);
+    cr_assert_eq(sin.sin_addr.s_addr, INADDR_ANY);
+}
+
+Test(Socket, bind_with_custom_config) {
+    MyFtp::Socket sock;
+    sockaddr_in config{};
+    config.sin_family = AF_INET;
+    config.sin_port = htons(0);
+    config.sin_addr.s_addr = INADDR_ANY;
+    sock.bind(0, config);
+    sock.listen();
+    cr_assert_geq(sock.fd(), 0);
+}
+
+Test(Socket, connect_success) {
+    // Create a listening socket
+    MyFtp::Socket server;
+    server.bind(0);
+    server.listen();
+
+    // Get the port
+    sockaddr_in sin{};
+    socklen_t len = sizeof(sin);
+    getsockname(server.fd(), reinterpret_cast<sockaddr*>(&sin), &len);
+    unsigned short port = ntohs(sin.sin_port);
+
+    // Connect to it
+    MyFtp::Socket client;
+    int ret = client.connect("127.0.0.1", port);
+    cr_assert_eq(ret, 0);
+}
+
+Test(Socket, connect_failure) {
+    MyFtp::Socket sock;
+    // Connect to a port that is not listening
+    int ret = sock.connect("127.0.0.1", 1);
+    cr_assert_eq(ret, -1);
+}
+
+Test(Socket, accept_success) {
+    MyFtp::Socket server;
+    server.bind(0);
+    server.listen();
+
+    sockaddr_in sin{};
+    socklen_t len = sizeof(sin);
+    getsockname(server.fd(), reinterpret_cast<sockaddr*>(&sin), &len);
+    unsigned short port = ntohs(sin.sin_port);
+
+    // Connect from a raw socket
+    int clientFd = socket(AF_INET, SOCK_STREAM, 0);
+    sockaddr_in addr{};
+    addr.sin_family = AF_INET;
+    addr.sin_port = htons(port);
+    addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+    ::connect(clientFd, reinterpret_cast<sockaddr*>(&addr), sizeof(addr));
+
+    MyFtp::Socket accepted = server.accept();
+    cr_assert_geq(accepted.fd(), 0);
+    close(clientFd);
+}

@@ -322,3 +322,87 @@ Test(Client, flush_output_empty) {
     cr_assert(client.getSession()->getOutputBuffer().empty());
     close(fds[1]);
 }
+
+// --- sendReply additional codes ---
+
+Test(Client, send_reply_150) {
+    int fds[2];
+    auto client = makeClient(fds);
+    client.sendReply(MyFtp::FILE_STATUS_OK_150);
+    std::string& out = client.getSession()->getOutputBuffer();
+    cr_assert_str_eq(out.c_str(), "150 File status okay; about to open data connection.\r\n");
+    close(fds[1]);
+}
+
+Test(Client, send_reply_226) {
+    int fds[2];
+    auto client = makeClient(fds);
+    client.sendReply(MyFtp::CLOSING_DATA_226);
+    std::string& out = client.getSession()->getOutputBuffer();
+    cr_assert_str_eq(out.c_str(), "226 Closing data connection.\r\n");
+    close(fds[1]);
+}
+
+Test(Client, send_reply_425) {
+    int fds[2];
+    auto client = makeClient(fds);
+    client.sendReply(MyFtp::CANT_OPEN_DATA_425);
+    std::string& out = client.getSession()->getOutputBuffer();
+    cr_assert_str_eq(out.c_str(), "425 Can't open data connection.\r\n");
+    close(fds[1]);
+}
+
+Test(Client, send_reply_503) {
+    int fds[2];
+    auto client = makeClient(fds);
+    client.sendReply(MyFtp::BAD_SEQUENCE_503);
+    std::string& out = client.getSession()->getOutputBuffer();
+    cr_assert_str_eq(out.c_str(), "503 Bad sequence of commands.\r\n");
+    close(fds[1]);
+}
+
+Test(Client, send_reply_custom_message) {
+    int fds[2];
+    auto client = makeClient(fds);
+    client.sendReply(static_cast<MyFtp::replyCode>(0), std::string("257 \"/\" created.\r\n"));
+    std::string& out = client.getSession()->getOutputBuffer();
+    cr_assert_str_eq(out.c_str(), "257 \"/\" created.\r\n");
+    close(fds[1]);
+}
+
+// --- getVirtualPath ---
+
+Test(Client, virtual_path_at_root) {
+    int fds[2];
+    auto client = makeClient(fds);
+    client.setCurrentPath(std::filesystem::canonical("/tmp"));
+    std::string vpath = client.getVirtualPath();
+    cr_assert_str_eq(vpath.c_str(), "/");
+    close(fds[1]);
+}
+
+Test(Client, virtual_path_subdir) {
+    int fds[2];
+    auto client = makeClient(fds);
+    // Create a temp subdir to test
+    std::string subdir = "/tmp/myftp_vpath_test_" + std::to_string(getpid());
+    std::filesystem::create_directory(subdir);
+    client.setCurrentPath(std::filesystem::canonical(subdir));
+    std::string vpath = client.getVirtualPath();
+    // should be /myftp_vpath_test_XXXX
+    cr_assert(vpath.starts_with("/"));
+    cr_assert(vpath.find("myftp_vpath_test_") != std::string::npos);
+    std::filesystem::remove(subdir);
+    close(fds[1]);
+}
+
+// --- getDataTransferManager ---
+
+Test(Client, get_data_transfer_manager) {
+    int fds[2];
+    auto client = makeClient(fds);
+    MyFtp::DataTransferManager& manager = client.getDataTransferManager();
+    cr_assert(manager.isMode(MyFtp::UNKNOWN));
+    close(fds[1]);
+}
+

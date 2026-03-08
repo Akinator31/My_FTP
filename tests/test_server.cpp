@@ -457,3 +457,358 @@ Test(Server, user_no_arg) {
     t.join();
 }
 
+// ========== PWD integration ==========
+
+Test(Server, pwd_integration) {
+    uint16_t port = 14211;
+    MyFtp::SignalHandler::mustClose = false;
+
+    std::thread t([port]() {
+        try {
+            MyFtp::Server server(port, "/tmp");
+            server.start();
+        }
+        catch (...) {}
+    });
+
+    int fd = connectToServer(port);
+    cr_assert_neq(fd, -1);
+    readReply(fd); // 220
+
+    sendCmd(fd, "USER Anonymous");
+    readReply(fd);
+    sendCmd(fd, "PASS");
+    readReply(fd);
+
+    sendCmd(fd, "PWD");
+    std::string r = readReply(fd);
+    cr_assert(r.find("257") != std::string::npos);
+    cr_assert(r.find("\"/\"") != std::string::npos);
+
+    close(fd);
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    stopServer(port);
+    t.join();
+}
+
+// ========== PWD without login -> 530 ==========
+
+Test(Server, pwd_without_login) {
+    uint16_t port = 14212;
+    MyFtp::SignalHandler::mustClose = false;
+
+    std::thread t([port]() {
+        try {
+            MyFtp::Server server(port, "/tmp");
+            server.start();
+        }
+        catch (...) {}
+    });
+
+    int fd = connectToServer(port);
+    cr_assert_neq(fd, -1);
+    readReply(fd); // 220
+
+    sendCmd(fd, "PWD");
+    std::string r = readReply(fd);
+    cr_assert(r.find("530") != std::string::npos);
+
+    close(fd);
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    stopServer(port);
+    t.join();
+}
+
+// ========== NOOP integration ==========
+
+Test(Server, noop_integration) {
+    uint16_t port = 14213;
+    MyFtp::SignalHandler::mustClose = false;
+
+    std::thread t([port]() {
+        try {
+            MyFtp::Server server(port, "/tmp");
+            server.start();
+        }
+        catch (...) {}
+    });
+
+    int fd = connectToServer(port);
+    cr_assert_neq(fd, -1);
+    readReply(fd); // 220
+
+    sendCmd(fd, "NOOP");
+    std::string r = readReply(fd);
+    cr_assert(r.find("200") != std::string::npos);
+
+    close(fd);
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    stopServer(port);
+    t.join();
+}
+
+// ========== HELP integration ==========
+
+Test(Server, help_integration) {
+    uint16_t port = 14214;
+    MyFtp::SignalHandler::mustClose = false;
+
+    std::thread t([port]() {
+        try {
+            MyFtp::Server server(port, "/tmp");
+            server.start();
+        }
+        catch (...) {}
+    });
+
+    int fd = connectToServer(port);
+    cr_assert_neq(fd, -1);
+    readReply(fd); // 220
+
+    sendCmd(fd, "HELP");
+    std::string r = readReply(fd);
+    cr_assert(r.find("214") != std::string::npos);
+
+    sendCmd(fd, "HELP USER");
+    std::string r2 = readReply(fd);
+    cr_assert(r2.find("214") != std::string::npos);
+
+    close(fd);
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    stopServer(port);
+    t.join();
+}
+
+// ========== DELE without login -> 530 ==========
+
+Test(Server, dele_without_login) {
+    uint16_t port = 14215;
+    MyFtp::SignalHandler::mustClose = false;
+
+    std::thread t([port]() {
+        try {
+            MyFtp::Server server(port, "/tmp");
+            server.start();
+        }
+        catch (...) {}
+    });
+
+    int fd = connectToServer(port);
+    cr_assert_neq(fd, -1);
+    readReply(fd); // 220
+
+    sendCmd(fd, "DELE somefile");
+    std::string r = readReply(fd);
+    cr_assert(r.find("530") != std::string::npos);
+
+    close(fd);
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    stopServer(port);
+    t.join();
+}
+
+// ========== PASV integration ==========
+
+Test(Server, pasv_integration) {
+    uint16_t port = 14216;
+    MyFtp::SignalHandler::mustClose = false;
+
+    std::thread t([port]() {
+        try {
+            MyFtp::Server server(port, "/tmp");
+            server.start();
+        }
+        catch (...) {}
+    });
+
+    int fd = connectToServer(port);
+    cr_assert_neq(fd, -1);
+    readReply(fd); // 220
+
+    sendCmd(fd, "PASV");
+    std::string r = readReply(fd);
+    cr_assert(r.find("227") != std::string::npos);
+
+    close(fd);
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    stopServer(port);
+    t.join();
+}
+
+// ========== PORT without login -> 530 ==========
+
+Test(Server, port_without_login) {
+    uint16_t port = 14217;
+    MyFtp::SignalHandler::mustClose = false;
+
+    std::thread t([port]() {
+        try {
+            MyFtp::Server server(port, "/tmp");
+            server.start();
+        }
+        catch (...) {}
+    });
+
+    int fd = connectToServer(port);
+    cr_assert_neq(fd, -1);
+    readReply(fd); // 220
+
+    sendCmd(fd, "PORT 127,0,0,1,4,1");
+    std::string r = readReply(fd);
+    cr_assert(r.find("530") != std::string::npos);
+
+    close(fd);
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    stopServer(port);
+    t.join();
+}
+
+// ========== PORT integration ==========
+
+Test(Server, port_integration) {
+    uint16_t port = 14218;
+    MyFtp::SignalHandler::mustClose = false;
+
+    std::thread t([port]() {
+        try {
+            MyFtp::Server server(port, "/tmp");
+            server.start();
+        }
+        catch (...) {}
+    });
+
+    int fd = connectToServer(port);
+    cr_assert_neq(fd, -1);
+    readReply(fd); // 220
+
+    sendCmd(fd, "USER Anonymous");
+    readReply(fd);
+    sendCmd(fd, "PASS");
+    readReply(fd);
+
+    sendCmd(fd, "PORT 127,0,0,1,4,1");
+    std::string r = readReply(fd);
+    cr_assert(r.find("200") != std::string::npos);
+
+    close(fd);
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    stopServer(port);
+    t.join();
+}
+
+// ========== LIST without login -> 530 ==========
+
+Test(Server, list_without_login) {
+    uint16_t port = 14219;
+    MyFtp::SignalHandler::mustClose = false;
+
+    std::thread t([port]() {
+        try {
+            MyFtp::Server server(port, "/tmp");
+            server.start();
+        }
+        catch (...) {}
+    });
+
+    int fd = connectToServer(port);
+    cr_assert_neq(fd, -1);
+    readReply(fd); // 220
+
+    sendCmd(fd, "LIST");
+    std::string r = readReply(fd);
+    cr_assert(r.find("530") != std::string::npos);
+
+    close(fd);
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    stopServer(port);
+    t.join();
+}
+
+// ========== LIST without data mode -> 425 ==========
+
+Test(Server, list_no_data_mode) {
+    uint16_t port = 14220;
+    MyFtp::SignalHandler::mustClose = false;
+
+    std::thread t([port]() {
+        try {
+            MyFtp::Server server(port, "/tmp");
+            server.start();
+        }
+        catch (...) {}
+    });
+
+    int fd = connectToServer(port);
+    cr_assert_neq(fd, -1);
+    readReply(fd); // 220
+
+    sendCmd(fd, "USER Anonymous");
+    readReply(fd);
+    sendCmd(fd, "PASS");
+    readReply(fd);
+
+    sendCmd(fd, "LIST");
+    std::string r = readReply(fd);
+    cr_assert(r.find("425") != std::string::npos);
+
+    close(fd);
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    stopServer(port);
+    t.join();
+}
+
+// ========== RETR without login -> 530 ==========
+
+Test(Server, retr_without_login) {
+    uint16_t port = 14221;
+    MyFtp::SignalHandler::mustClose = false;
+
+    std::thread t([port]() {
+        try {
+            MyFtp::Server server(port, "/tmp");
+            server.start();
+        }
+        catch (...) {}
+    });
+
+    int fd = connectToServer(port);
+    cr_assert_neq(fd, -1);
+    readReply(fd); // 220
+
+    sendCmd(fd, "RETR somefile");
+    std::string r = readReply(fd);
+    cr_assert(r.find("530") != std::string::npos);
+
+    close(fd);
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    stopServer(port);
+    t.join();
+}
+
+// ========== STOR without login -> 530 ==========
+
+Test(Server, stor_without_login) {
+    uint16_t port = 14222;
+    MyFtp::SignalHandler::mustClose = false;
+
+    std::thread t([port]() {
+        try {
+            MyFtp::Server server(port, "/tmp");
+            server.start();
+        }
+        catch (...) {}
+    });
+
+    int fd = connectToServer(port);
+    cr_assert_neq(fd, -1);
+    readReply(fd); // 220
+
+    sendCmd(fd, "STOR somefile");
+    std::string r = readReply(fd);
+    cr_assert(r.find("530") != std::string::npos);
+
+    close(fd);
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    stopServer(port);
+    t.join();
+}
