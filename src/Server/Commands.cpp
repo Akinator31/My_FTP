@@ -317,11 +317,18 @@ namespace MyFtp {
         }
 
         const std::filesystem::path filepath = client.getCurrentPath() / path;
-        std::filesystem::perms perms = std::filesystem::status(path).permissions();
+        const std::filesystem::perms perms = std::filesystem::status(path).permissions();
 
-        if (!exists(filepath) || !is_regular_file(filepath) || (perms & std::filesystem::perms::owner_write) ==
-            std::filesystem::perms::none)
+        if (access(filepath.c_str(), R_OK) != 0) {
             client.sendReply(FILE_UNAVAILABLE_550);
+            return;
+        }
+
+        if (!exists(filepath) || !is_regular_file(filepath) || (perms & std::filesystem::perms::others_read) ==
+            std::filesystem::perms::none || !Utils::isPathInsideTheRootPath(client.getRootPath(), filepath)) {
+            client.sendReply(FILE_UNAVAILABLE_550);
+            return;
+        }
 
         manager.setTransferContext({
             .type = RETR,
