@@ -125,7 +125,7 @@ namespace MyFtp {
                     client.sendReply(CLOSING_DATA_226);
 
                 if (this->_poller.isReadable(clientFd)) {
-                    const auto result = this->_clients[i].readIncoming();
+                    const auto result = client.readIncoming();
                     if (result == Client::ReadResult::Disconnected) {
                         this->_poller.remove(clientFd);
                         this->_disconnectClient(i, true);
@@ -134,18 +134,18 @@ namespace MyFtp {
                     if (result == Client::ReadResult::Error)
                         throw MyFtpErrors(ErrorReadSocket);
 
-                    while (auto cmd = this->_clients[i].nextCommand()) {
-                        this->_handleCommand(this->_clients[i], *cmd);
+                    while (auto cmd = client.nextCommand()) {
+                        this->_handleCommand(client, *cmd);
                     }
                 }
 
                 if (this->_poller.isWritable(clientFd))
-                    this->_clients[i].flushOutput();
+                    client.flushOutput();
 
                 if (this->_poller.isInvalid(clientFd) ||
                     this->_poller.hasError(clientFd) ||
                     this->_poller.hasHangup(clientFd) ||
-                    this->_clients[i].mustLogOff()) {
+                    client.mustLogOff()) {
                     this->_poller.remove(clientFd);
                     this->_disconnectClient(i, false);
                 }
